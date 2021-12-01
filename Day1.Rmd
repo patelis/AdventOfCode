@@ -22,6 +22,8 @@ data <- read_csv("2021/data/data_day1.txt", col_names = "depth")
 
 ```
 
+## Part 1
+
 ```{r}
 
 # Single Measurement
@@ -39,6 +41,8 @@ data %>%
   summarise(count = n())
 
 ```
+
+## Part 2
 
 ```{r}
 
