@@ -5,7 +5,7 @@ date: "02/12/2021"
 output: html_document
 ---
 
-# Day 1: Dive
+# Day 2: Dive
 
 Solution to https://adventofcode.com/2021/day/2
 
