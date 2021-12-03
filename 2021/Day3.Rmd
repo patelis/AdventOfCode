@@ -7,7 +7,7 @@ output: html_document
 
 # Day 3: Binary Diagnostic
 
-Solution to https://adventofcode.com/2021/day/2
+Solution to https://adventofcode.com/2021/day/3
 
 ```{r data}
 
