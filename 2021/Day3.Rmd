@@ -11,15 +11,19 @@ Solution to https://adventofcode.com/2021/day/3
 
 ```{r data}
 
+library(magrittr)
+
 data <- read.table("2021/data/data_day3.txt", col.names = "string", colClasses = "character")
 
+str_length <- unique(nchar(data$string))
+
 # Create binary df the tidy way
-df <- data %>% tidyr::separate("string", sep = 1:11, into = paste0("bit", 1:12), convert = TRUE) %>% as_tibble()
+df <- data %>% tidyr::separate("string", sep = 1:(str_length - 1), into = paste0("bit", 1:str_length), convert = TRUE) %>% tidyr::as_tibble()
 
 # Create binary df with base R
 l <- strsplit(data$string, split = NULL)
 df_base <- do.call(rbind.data.frame, l)
-names(df_base) <- paste0("bit", 1:12)
+names(df_base) <- paste0("bit", 1:str_length)
 df_base <- as.data.frame(sapply(df_base, as.integer))
 
 ```
@@ -105,9 +109,8 @@ common_filter_base <- function(data, n = 1, opposite = FALSE) {
     
     value_to_filter <- if (opposite) +!value_to_filter else value_to_filter
 
-    string <- paste0("data[data[['bit", n, "']] == value_to_filter, ]")
-    data_filtered <- eval(parse(text = string))
-
+    data_filtered <- data[data[[column]] == value_to_filter, ]
+    
     common_filter_base(data_filtered, n + 1, opposite = opposite)
     
   } else {
