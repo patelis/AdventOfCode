@@ -11,20 +11,15 @@ Solution to https://adventofcode.com/2021/day/3
 
 ```{r data}
 
-library(magrittr)
-
 data <- read.table("2021/data/data_day3.txt", col.names = "string", colClasses = "character")
 
 str_length <- unique(nchar(data$string))
 
-# Create binary df the tidy way
-df <- data %>% tidyr::separate("string", sep = 1:(str_length - 1), into = paste0("bit", 1:str_length), convert = TRUE) %>% tidyr::as_tibble()
-
 # Create binary df with base R
 l <- strsplit(data$string, split = NULL)
-df_base <- do.call(rbind.data.frame, l)
-names(df_base) <- paste0("bit", 1:str_length)
-df_base <- as.data.frame(sapply(df_base, as.integer))
+df <- do.call(rbind.data.frame, l)
+names(df) <- paste0("bit", 1:str_length)
+df <- as.data.frame(sapply(df, as.integer))
 
 ```
 
@@ -62,42 +57,7 @@ gamma * epsilon
 
 # Part 2
 
-# tidyverse solution
 common_filter <- function(data, n = 1, opposite = FALSE) {
-  
-  if (n <= length(data) & nrow(data) > 1) {
-    
-    column <- paste0("bit", n)
-    
-    value_to_filter <- as.numeric(colMeans(data[column]))
-    
-    value_to_filter <- if (value_to_filter == .5) 1 else round(value_to_filter) # round(.5) is 0, solution asks it to be 1 (for the least case we reverse in next line)
-    
-    value_to_filter <- if (opposite) +!value_to_filter else value_to_filter
-    
-    data_filtered <- data %>% dplyr::filter(.data[[column]] == value_to_filter)
-    
-    common_filter(data_filtered, n + 1, opposite = opposite)
-    
-  } else {
-
-    data %>% 
-      convert_binary_df_to_decimal_num()
-
-  }
-  
-}
-
-oxygen <- common_filter(df)
-  
-co2 <- common_filter(df, opposite = TRUE)
-
-oxygen * co2
-# 1353024
-
-# base R solution - exactly same except for the filter which is replaced with a eval + parse + string solution
-
-common_filter_base <- function(data, n = 1, opposite = FALSE) {
   
     if (n <= length(data) & nrow(data) > 1) {
     
@@ -111,7 +71,7 @@ common_filter_base <- function(data, n = 1, opposite = FALSE) {
 
     data_filtered <- data[data[[column]] == value_to_filter, ]
     
-    common_filter_base(data_filtered, n + 1, opposite = opposite)
+    common_filter(data_filtered, n + 1, opposite = opposite)
     
   } else {
 
@@ -121,10 +81,11 @@ common_filter_base <- function(data, n = 1, opposite = FALSE) {
   
 }
 
-oxygen_base <- common_filter_base(df_base)
+oxygen <- common_filter(df)
   
-co2_base <- common_filter_base(df_base, opposite = TRUE)
+co2 <- common_filter(df, opposite = TRUE)
 
-oxygen_base * co2_base
+oxygen * co2
+# 1353024
 
 ```
