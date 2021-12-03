@@ -5,23 +5,16 @@ date: "03/12/2021"
 output: html_document
 ---
 
-# Day 2: Dive
+# Day 3: Binary Diagnostic
 
 Solution to https://adventofcode.com/2021/day/2
-
-```{r libraries}
-
-library(dplyr)
-library(tidyr)
-
-```
 
 ```{r data}
 
 data <- read.table("2021/data/data_day3.txt", col.names = "string", colClasses = "character")
 
 # Create binary df the tidy way
-df <- data %>% separate("string", sep = 1:11, into = paste0("bit", 1:12), convert = TRUE) %>% as_tibble()
+df <- data %>% tidyr::separate("string", sep = 1:11, into = paste0("bit", 1:12), convert = TRUE) %>% as_tibble()
 
 # Create binary df with base R
 l <- strsplit(data$string, split = NULL)
@@ -33,7 +26,7 @@ df_base <- as.data.frame(sapply(df_base, as.integer))
 
 ## Part 1
 
-```{r}
+```{r part1}
 
 # Part 1
 
@@ -61,7 +54,7 @@ gamma * epsilon
 
 ## Part 2
 
-```{r}
+```{r part2}
 
 # Part 2
 
@@ -78,7 +71,7 @@ common_filter <- function(data, n = 1, opposite = FALSE) {
     
     value_to_filter <- if (opposite) +!value_to_filter else value_to_filter
     
-    data_filtered <- data %>% filter(.data[[column]] == value_to_filter)
+    data_filtered <- data %>% dplyr::filter(.data[[column]] == value_to_filter)
     
     common_filter(data_filtered, n + 1, opposite = opposite)
     
