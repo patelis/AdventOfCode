@@ -90,7 +90,7 @@ unmarked_sum <- sum(bingo_boards[[winning_position]][!check_bingo[[winning_posit
 last_called_out <- numbers_called_out[turn_counter + bingo_board_size - 1]
 
 unmarked_sum * last_called_out
-# 76277
+# 45031
 
 ```
 
@@ -119,9 +119,9 @@ while (!loss_flag) {
   col_win_vec <- unlist(lapply(1:bingo_players, FUN = (\(x) bingo_board_size %in% col_sums[[x]])))
   row_win_vec <- unlist(lapply(1:bingo_players, FUN = (\(x) bingo_board_size %in% row_sums[[x]])))
   
-  col_win <- all(col_win_vec | row_win_vec)
+  all_win <- all(col_win_vec | row_win_vec)
   
-  if (col_win | row_win) {
+  if (all_win) {
     
     losing_position <- which(!(col_win_vec_last_turn | row_win_vec_last_turn))
     loss_flag <- TRUE
@@ -142,6 +142,6 @@ unmarked_sum <- sum(bingo_boards[[losing_position]][!check_bingo[[losing_positio
 last_called_out <- numbers_called_out[turn_counter + bingo_board_size - 1]
 
 unmarked_sum * last_called_out
-# 76277
+# 2568
 
 ```
