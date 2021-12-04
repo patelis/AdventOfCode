@@ -32,10 +32,7 @@ bingo_players <- length(bingo_boards)
 
 for (i in 1:bingo_players) {
   
-  bingo_boards[[i]] <- data[(1 + (i - 1) * 5):(5 + (i - 1) * 5)]
-  
-  bingo_boards[[i]] <- bingo_boards[[i]] |> 
-    unlist() |> 
+  bingo_boards[[i]] <- data[(1 + (i - 1) * 5):(5 + (i - 1) * 5)] |> 
     strsplit(split = " ")
 
   bingo_boards[[i]] <- lapply(1:5, FUN = (\(x) bingo_boards[[i]][[x]][bingo_boards[[i]][[x]] != ""])) |>
