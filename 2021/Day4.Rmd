@@ -11,6 +11,8 @@ Solution to https://adventofcode.com/2021/day/4
 
 ```{r data}
 
+# tictoc::tic()
+
 path <- "2021/data/data_day4.txt"
 
 data <- readLines(path)
@@ -46,6 +48,9 @@ for (i in 1:bingo_players) {
 first_five <- numbers_called_out[1:5]
 remaining_numbers <- numbers_called_out[-(1:5)]
 
+# tictoc::toc()
+# 0.03 sec elapsed
+
 ```
 
 ## Part 1
@@ -53,6 +58,8 @@ remaining_numbers <- numbers_called_out[-(1:5)]
 ```{r part1}
 
 # Part 1
+
+# tictoc::tic()
 
 bingo_numbers <- first_five
 check_bingo <- vector("list", length = length(data)/bingo_board_size)
@@ -92,6 +99,9 @@ last_called_out <- numbers_called_out[turn_counter + bingo_board_size - 1]
 unmarked_sum * last_called_out
 # 45031
 
+# tictoc::toc()
+# 0.04 sec elapsed
+
 ```
 
 ## Part 2
@@ -103,6 +113,8 @@ unmarked_sum * last_called_out
 ## The solution is pretty similar to part 1, the difference is we need to check for all instead of any, 
 ## keep the win_vec of previous turn to figure out which board is the last to win
 ## and check that a board has not won in either rows OR cols 
+
+# tictoc::tic()
 
 bingo_numbers <- first_five
 check_bingo <- vector("list", length = length(data)/bingo_board_size)
@@ -143,5 +155,8 @@ last_called_out <- numbers_called_out[turn_counter + bingo_board_size - 1]
 
 unmarked_sum * last_called_out
 # 2568
+
+# tictoc::toc()
+# 0.17 sec elapsed
 
 ```
