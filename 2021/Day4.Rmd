@@ -32,18 +32,18 @@ bingo_players <- length(bingo_boards)
 
 for (i in 1:bingo_players) {
   
-  bingo_boards[[i]] <- data[(1 + (i - 1) * 5):(5 + (i - 1) * 5)] |> 
+  bingo_boards[[i]] <- data[(1 + (i - 1) * bingo_board_size):(bingo_board_size + (i - 1) * bingo_board_size)] |> 
     strsplit(split = " ")
 
-  bingo_boards[[i]] <- lapply(1:5, FUN = (\(x) bingo_boards[[i]][[x]][bingo_boards[[i]][[x]] != ""])) |>
+  bingo_boards[[i]] <- lapply(1:bingo_board_size, FUN = (\(x) bingo_boards[[i]][[x]][bingo_boards[[i]][[x]] != ""])) |>
     unlist() |>
     as.numeric()|>
-    matrix(nrow = 5, ncol = 5, byrow = TRUE)
+    matrix(nrow = bingo_board_size, ncol = bingo_board_size, byrow = TRUE)
   
 }
 
-first_five <- numbers_called_out[1:5]
-remaining_numbers <- numbers_called_out[-(1:5)]
+first_five <- numbers_called_out[1:bingo_board_size]
+remaining_numbers <- numbers_called_out[-(1:bingo_board_size)]
 
 # tictoc::toc()
 # 0.03 sec elapsed
