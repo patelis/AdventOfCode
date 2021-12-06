@@ -9,35 +9,22 @@ output: html_document
 
 Solution to https://adventofcode.com/2021/day/6
 
-```{r}
-# 
-# library(dplyr)
-# library(tidyr)
-
-options(scipen = 999)
-
-```
-
-
 ```{r data}
 
 # tictoc::tic()
 
 path <- "2021/data/data_day6.txt"
 
-data <- readLines(path) |> strsplit(split = ",")
-data <- data[[1]] |> as.numeric()
-
-first_reproduction <- 8
+data <- as.numeric(strsplit(readLines(path), split = ",")[[1]])
 
 # tictoc::toc()
-# 0.01 sec elapsed
+# 0 sec elapsed
 
 ```
 
 ## Part 1
 
-First attempt at part 1. This works fine but will encounter allocation issues when days increases as in part 2.
+First attempt at part 1. This works fine but will encounter allocation issues when days increase in part 2.
 
 ```{r part1}
 
@@ -76,7 +63,7 @@ population_growth(reproduction_cycle, days)
 
 ```
 
-Second attempt at part 1
+Second attempt at part 1 to improve memory efficiency
 
 ```{r part1_second_attempt}
 
@@ -131,6 +118,8 @@ population_growth_table(reproduction_table, days)
 # tictoc::tic()
 
 days <- 256
+
+options(scipen = 999)
 population_growth_table(reproduction_table, days)
 # 1693022481538
 
