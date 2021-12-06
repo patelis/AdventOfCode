@@ -19,7 +19,7 @@ library(tidyr)
 
 ```{r data}
 
-tictoc::tic()
+# tictoc::tic()
 
 path <- "2021/data/data_day5.txt"
 
@@ -40,7 +40,7 @@ ymax <- find_edges(df$y1, df$y2, max)
 
 grid <- matrix(data = 0, nrow = xmax, ncol = ymax)
 
-tictoc::toc()
+# tictoc::toc()
 # 0.01 sec elapsed
 
 ```
@@ -51,13 +51,13 @@ tictoc::toc()
 
 # Part 1
 
-# tictoc::tic()
+tictoc::tic()
 
 solve_grid <- function(df, grid, diag = FALSE) {
   
   if (!diag) {
     
-    df <- subset(df, x1 == x1 | y1 == y2)
+    df <- subset(df, x1 == x2 | y1 == y2)
     
   }
   
@@ -88,7 +88,7 @@ grid_part1 <- solve_grid(df, grid)
 sum(grid_part1 >= 2)
 # 6005
 
-# tictoc::toc()
+tictoc::toc()
 # 0.03 sec elapsed
 
 ```
@@ -99,13 +99,13 @@ sum(grid_part1 >= 2)
 
 # Part 2
 
-tictoc::tic()
+# tictoc::tic()
 
 grid_part2 <- solve_grid(df, grid, diag = TRUE)
 sum(grid_part2 >= 2)
 # 23864
 
-tictoc::toc()
+# tictoc::toc()
 # 0.89 sec elapsed
 
 ```
