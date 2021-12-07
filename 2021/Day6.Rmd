@@ -17,6 +17,8 @@ path <- "2021/data/data_day6.txt"
 
 data <- as.numeric(strsplit(readLines(path), split = ",")[[1]])
 
+first_reproduction <- 8
+
 # tictoc::toc()
 # 0 sec elapsed
 
