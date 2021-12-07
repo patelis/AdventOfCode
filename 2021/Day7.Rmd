@@ -1,0 +1,65 @@
+---
+title: "Day7"
+author: "Konstantinos Patelis"
+date: "07/12/2021"
+output: html_document
+---
+
+# Day 7: The Treachery of Whales
+
+Solution to https://adventofcode.com/2021/day/7
+
+```{r data}
+
+path <- "2021/data/data_day7.txt"
+
+data <- as.numeric(strsplit(readLines(path), split = ",")[[1]])
+
+```
+
+## Part 1
+
+```{r part1}
+
+# Part 1
+
+min_travel <- function(x, vec) {
+  
+  diff <- abs(vec - x)
+  
+  sum(diff)
+  
+}
+
+xmin_part1 <- optimize(min_travel, interval = c(min(data), max(data)), vec = data)
+xmin_part1$objective
+# 357353
+
+```
+
+## Part 2
+
+```{r part2}
+
+# Part 2
+
+tictoc::tic()
+
+min_fuel_consumption <- function(x, vec) {
+  
+  diff <- abs(vec - ceiling(x))
+  
+  fuel <- sapply(diff, FUN = \(x) x * (x + 1) / 2)
+  
+  sum(fuel)
+
+}
+
+xmin_part2 <- optimize(min_fuel_consumption, interval = c(min(data), max(data)), vec = data)
+xmin_part2$objective
+# 104822130
+
+tictoc::toc()
+# 0.03 sec elapsed
+
+```
