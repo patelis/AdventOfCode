@@ -185,6 +185,7 @@ decoder <- function(output, encoding) {
 encodings <- lapply(signal, encoder)
 decoded <- mapply(decoder, outputs, encodings)
 sum(decoded)
+# 1027483
 
 # tictoc::toc()
 # 0.2 sec elapsed
