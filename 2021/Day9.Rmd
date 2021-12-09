@@ -5,7 +5,7 @@ date: "09/12/2021"
 output: html_document
 ---
 
-# Day 9: Seven Segment Search
+# Day 9: Smoke Basin
 
 Solution to https://adventofcode.com/2021/day/9
 
