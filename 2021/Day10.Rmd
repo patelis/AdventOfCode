@@ -1,0 +1,140 @@
+---
+title: "Day10"
+author: "Konstantinos Patelis"
+date: "10/12/2021"
+output: html_document
+---
+
+# Day 10: Syntax Scoring
+
+Solution to https://adventofcode.com/2021/day/10
+
+```{r data}
+
+library(tidyverse)
+library(stringr)
+
+path <- "2021/data/data_day10.txt"
+
+input <- readLines(path)
+data <- tibble(input = input)
+
+pairs <- c("<>" = "", "\\{\\}" = "", "\\(\\)" = "", "\\[\\]" = "")
+LHS <- c("<" = "", "\\{" = "", "\\(" = "", "\\[" = "")
+LRHS <- c("<" = ">", "\\{" = "\\}", "\\(" = "\\)", "\\[" = "\\]")
+
+score_part1 <- c(">" = "25137", "\\}" = "1197", "\\)" = "3", "\\]" = "57")
+score_part2 <- c(">" = "4", "\\}" = "3", "\\)" = "1", "\\]" = "2")
+
+```
+
+## Part 1
+
+```{r part1}
+
+# Part 1
+
+# tictoc::tic()
+
+# Remove complete pairs
+
+no_complete <- data
+flag <- FALSE
+while (!flag) {
+
+no_complete <- no_complete %>% 
+  mutate(length_input = str_length(input), 
+         input = str_replace_all(input, pairs), 
+         # length_input = str_length(input), 
+         length_clean = str_length(input), 
+         check =  length_input == length_clean)
+
+flag <- all(no_complete$check)
+
+}
+
+# Remove LHS
+no_LHS <- no_complete
+flag <- FALSE
+while (!flag) {
+
+no_LHS <- no_LHS %>% 
+  mutate(length_input = str_length(input), 
+         input = str_replace_all(input, LHS), 
+         # length_input = str_length(input), 
+         length_clean = str_length(input), 
+         check =  length_input == length_clean)
+
+flag <- all(no_LHS$check)
+
+}
+
+# Remove incomplete and select first closing from the rest
+
+find_incomplete_lines <- no_LHS %>% 
+  mutate(id = row_number()) %>% 
+  filter(input == "") %>% 
+  pull(id)
+
+no_LHS <- no_LHS %>% 
+  filter(input != "")
+
+first_char <- str_split_fixed(no_LHS$input, pattern = "", n = 2)[, 1]
+
+points <- as.numeric(str_replace_all(first_char, score_part1))
+
+sum(points)
+# 278475
+
+# tictoc::toc()
+# 0.04 sec elapsed
+
+
+```
+
+
+## Part 2
+
+```{r part2}
+
+# Part 2
+
+# Keep incomplete lines
+
+tictoc::tic()
+
+part2 <- no_complete %>% 
+  mutate(id = row_number()) %>% 
+  filter(id %in% find_incomplete_lines) %>% 
+  mutate(rhs = str_replace_all(input, LRHS), 
+         rhs_rev = stringi::stri_reverse(rhs)) %>% 
+  select(rhs_rev) %>% 
+  mutate(str_l = str_length(rhs_rev))
+
+max_l <- max(part2$str_l)
+part2_split <- str_split_fixed(part2$rhs_rev, pattern = "", n = max_l)
+colnames(part2_split) <- paste0("x", 1:max_l)
+
+part2_split <- as_tibble(part2_split, .name_repair = "unique") %>% 
+  mutate(across(.cols = everything(), .fns = str_replace_all, score_part2)) %>% 
+  mutate(across(.cols = everything(), .fns = as.numeric)) %>% 
+  mutate(x0 = 0)
+  
+score <- part2_split
+for (i in 1:max_l) {
+  
+  x <- paste0("x", i)
+  x_1 <- paste0("x", i - 1)
+  
+  score <- score %>% 
+    mutate({{ x }} := ifelse(is.na(.data[[x]]), .data[[x_1]], .data[[x]] + 5 * .data[[x_1]]))
+
+}
+  
+median(score[[x]])
+# 3015539998
+
+tictoc::toc()
+# 0.08 sec elapsed
+
+```
