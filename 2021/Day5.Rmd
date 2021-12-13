@@ -51,7 +51,7 @@ grid <- matrix(data = 0, nrow = xmax, ncol = ymax)
 
 # Part 1
 
-tictoc::tic()
+# tictoc::tic()
 
 solve_grid <- function(df, grid, diag = FALSE) {
   
@@ -88,7 +88,7 @@ grid_part1 <- solve_grid(df, grid)
 sum(grid_part1 >= 2)
 # 6005
 
-tictoc::toc()
+# tictoc::toc()
 # 0.03 sec elapsed
 
 ```
