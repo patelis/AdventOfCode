@@ -100,6 +100,8 @@ nrow(part1)
 
 # Part 2
 
+tictoc::tic()
+
 paths <- bind_rows(inside, ends, tibble(from = "end", to = "end")) %>%
   rename(node = from)
 
@@ -129,8 +131,6 @@ repeat {
 
   if (nrow(part2) == 0) break
   
-  browser()
-  
   part2_lng <- part2 %>% 
     select(-from) %>% 
     pivot_longer(cols = -id) %>%
@@ -157,5 +157,7 @@ repeat {
 
 nrow(part2_final)
 # 116692
+
+tictoc::toc()
 
 ```
