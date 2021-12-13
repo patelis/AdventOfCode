@@ -1,0 +1,119 @@
+---
+title: "Day13"
+author: "Konstantinos Patelis"
+date: "13/12/2021"
+output: html_document
+---
+
+# Day 13: Transparent Origami
+
+Solution to https://adventofcode.com/2021/day/13
+
+```{r}
+
+library(tidyverse)
+
+```
+
+
+```{r data}
+
+path <- "2021/data/data_day13.txt"
+
+data <- read_csv(path, col_names = c("x", "y"))
+
+```
+
+## Part 1
+
+```{r part1}
+
+folds <- data %>% 
+  filter(str_detect(x, "fold along")) %>% 
+  select(fold = x) %>% 
+  extract(col = fold, regex = "fold along (x|y)=([0-9]+)", 
+          into = c("axis", "line")) %>% 
+  mutate(line = as.numeric(line))
+
+fills <- data %>% 
+  filter(!str_detect(x, "fold along")) %>% 
+  mutate(x = as.numeric(x))
+
+columns <- max(fills$x)
+rows <- max(fills$y)
+
+init_mat <- matrix(0, nrow = rows + 2, ncol = columns + 2)
+
+for (i in 1:nrow(fills)) {
+  
+  x <- fills$y[[i]] + 1
+  y <- fills$x[[i]] + 1
+  
+  init_mat[x, y] <- init_mat[x, y] + 1
+  
+}
+
+folding <- function(mat, folds) {
+  
+  for (i in 1:nrow(folds)) {
+    
+    # line <- folds$line[[1]] + 1
+    line <- folds$line[[i]] + 1
+    
+    if (folds$axis[[i]] == "x") {
+      
+      first_mat <- mat[, 1:(line -1)]
+      
+      second_mat <- mat[, ncol(mat):(line + 1)]
+      
+      mat <- first_mat + second_mat
+      
+    } else if (folds$axis[[i]] == "y") {
+      
+      first_mat <- mat[1:(line -1),]
+      
+      second_mat <- mat[nrow(mat):(line + 1),]
+      
+      mat <- first_mat + second_mat
+      
+    }
+    
+  }
+  
+  mat
+  
+}
+
+part1_mat <- folding(init_mat, folds %>% slice_head(n = 1))
+
+sum(part1_mat > 0)
+# 737
+
+```
+
+## Part 2
+
+```{r part2}
+
+# Part 2
+
+part2_mat <- folding(init_mat, folds)
+
+part2_mat <- +(part2_mat > 0)
+names <- paste0("x", 1:ncol(part2_mat))
+colnames(part2_mat) <- names
+
+df <- as_tibble(part2_mat) %>% 
+  mutate(y = -row_number()) %>% 
+  pivot_longer(cols = starts_with("x"), names_to = "x", values_to = "value") %>% 
+  mutate(x = as.numeric(str_replace_all(x, "x", ""))) %>% 
+  filter(value == 1)
+
+df %>% ggplot(aes(x,y)) + 
+  geom_tile() + 
+  theme_minimal() 
+
+# ZUJUAFHP
+
+```
+
