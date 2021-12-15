@@ -1,0 +1,152 @@
+---
+title: "Day15"
+author: "Konstantinos Patelis"
+date: "15/12/2021"
+output: html_document
+---
+
+# Day 15: Chiton
+
+Solution to https://adventofcode.com/2021/day/15
+
+```{r data}
+
+path <- "2021/data/data_day15.txt"
+
+data <- readLines(path) |> 
+  strsplit(split = NULL) |> 
+  unlist() |>
+  sapply(FUN = (\(x) as.numeric(x))) |> 
+  matrix(nrow = 100, ncol = 100, byrow = TRUE)
+
+mat <- data
+
+# mat <- c("1163751742",
+#            "1381373672",
+#            "2136511328",
+#            "3694931569",
+#            "7463417111",
+#            "1319128137",
+#            "1359912421",
+#            "3125421639",
+#            "1293138521",
+#            "2311944581") |> 
+#           strsplit(split = NULL) |> 
+#           unlist() |>
+#           sapply(FUN = (\(x) as.numeric(x))) |> 
+#           matrix(nrow = 10, ncol = 10, byrow = TRUE)
+
+```
+
+## Part 1
+
+```{r part1}
+
+# Dijkstra algorithm
+
+dijk <- function(mat) {
+  
+  rows = nrow(mat)
+  columns = ncol(mat)
+  
+  h_moves <- c(1 , -1, 0,  0)
+  v_moves <- c(0 ,  0, 1, -1)
+  
+  distance_matrix <- matrix(Inf, nrow = rows, ncol = columns, byrow = TRUE)
+  distance_matrix[1,1] = 0
+  
+  start <- tibble(x = 1, y = 1, distance = 0)
+  
+  queue <- start
+  all_visits <- start
+  
+  counter <- 0
+  
+  while (length(queue) > 0) {
+    
+    counter <- counter + 1
+    
+    queue <- queue %>% arrange(distance)
+    
+    check <- queue %>% slice_head(n = 1)
+    queue <- queue %>% slice_tail(n = nrow(queue) - 1)
+    
+    i <- check[["x"]]
+    j <- check[["y"]]
+    dist <- check[["distance"]]
+    
+    if (i == rows & j == columns) break
+    
+    for (k in 1:length(h_moves)) {
+    
+      x <- i + h_moves[k]
+      y <- j + v_moves[k]
+      dist <- check[["distance"]]
+      
+      if (x > 0 & x <= rows & y > 0 & y <= columns) {
+        
+        dist <- dist + mat[x, y]
+  
+        shorter <- dist < distance_matrix[x, y]
+  
+        if (shorter) {
+  
+          distance_matrix[x, y] = dist
+  
+          point <- tibble(x = x, y = y, distance = dist)
+  
+          queue <- bind_rows(queue, point)
+          all_visits <- bind_rows(all_visits, point)
+  
+        }
+        
+        
+      }
+    }
+  
+  }
+  
+  list(check = check, distance_matrix = distance_matrix, counter = counter)
+  
+}
+
+
+res <- dijk(mat)
+
+```
+
+
+## Part 2
+
+```{r part2}
+
+mat_list <- vector("list", 5)
+
+mat_list[[1]] <- mat
+
+for (i in 2:5) {
+  
+  mat_list[[i]] <- mat_list[[i - 1]] + 1
+  check <- mat_list[[i]] == 10
+  mat_list[[i]][check] <- 1
+      
+}
+
+big_mat <- do.call("cbind", mat_list)
+
+mat_list[[1]] <- big_mat
+
+for (i in 2:5) {
+  
+  mat_list[[i]] <- mat_list[[i - 1]] + 1
+  check <- mat_list[[i]] == 10
+  mat_list[[i]][check] <- 1
+      
+}
+
+big_mat <- do.call("rbind", mat_list)
+
+
+res_part2 <- dijk(big_mat)
+
+```
