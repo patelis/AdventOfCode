@@ -1,0 +1,81 @@
+---
+title: "Day6"
+author: "Konstantinos Patelis"
+format: html
+editor: visual
+---
+
+## Day 6
+
+### Data
+
+```{r}
+library(tidyverse)
+
+data <- readLines(here::here("2023", "data", "day6_data.txt"), warn = FALSE) |> 
+  tibble(data = _) |> 
+  separate_wider_delim(cols = data, delim = ":", names = c("x", "race")) |> 
+  mutate(x = str_to_lower(trimws(x)), race = trimws(race), 
+         race = str_replace_all(race, " +", ",")) |> 
+  separate_wider_delim(race, delim = ",", names_sep = "_") |> 
+  pivot_longer(cols = starts_with("race_")) |> 
+  pivot_wider(names_from = "x", values_from = "value") |> 
+  mutate(time = as.numeric(time), distance = as.numeric(distance))
+  
+
+```
+
+### Part 1
+
+This can be written as: X = u \* (T-t), where X is the distance travelled, u is speed, T is the time the race lasts, and t is the charging time. u and t are the same, since the charging time equals the speed afterwards. We want to exceed X, so it would be: 
+
+$$X <= t * (T - t) $$ 
+Which becomes:
+
+$$t^2 - T*t + X < 0$$
+Since the coefficient of t^2 is positive, we know from mathematics that the range that satisfies the inequality is between the roots of the equation.
+The two roots are:
+
+$$x_{1,2} = {-b \pm \sqrt{b^2-4ac} \over 2a}.$$
+Since we want x2 - x1, we are actually looking for:
+
+$$range =  \sqrt{b^2-4ac}$$
+In this case:
+
+$$range = \sqrt{time^2-4*distance} $$
+
+
+```{r}
+
+data |> 
+  mutate(D = time^2 - 4 * 1 * distance, 
+         solution_1 = ceiling((time - sqrt(D)) / 2), 
+         solution_2 = ceiling((time + sqrt(D)) / 2), 
+         delta = solution_2 - solution_1) |> 
+  summarise(prod(delta))
+```
+### Part 2
+
+This is really the same approach, we just have to re-do the parsing
+
+```{r}
+
+data <- readLines(here::here("2023", "data", "day6_data.txt"), warn = FALSE) |> 
+  tibble(data = _) |> 
+  separate_wider_delim(cols = data, delim = ":", names = c("x", "race")) |> 
+  mutate(x = str_to_lower(trimws(x)), race = trimws(race), 
+         race = str_replace_all(race, " +", "")) |> 
+  mutate(race = as.numeric(race))
+
+time <- data$race[[1]]
+distance <- data$race[[2]]
+
+D = time^2 - 4 * 1 * distance
+solution_1 = ceiling((time - sqrt(D)) / 2)
+solution_2 = ceiling((time + sqrt(D)) / 2) 
+delta = solution_2 - solution_1
+
+delta
+
+```
+

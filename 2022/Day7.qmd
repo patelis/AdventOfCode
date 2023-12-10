@@ -1,0 +1,143 @@
+---
+title: "Day7"
+author: "Konstantinos Patelis"
+format: html
+---
+
+# Day 7: No Space Left On Device
+
+Solution to https://adventofcode.com/2022/day/7
+
+```{r}
+
+library(tidyverse)
+path <- "2022/data/data_day7.txt"
+#data <- readLines(path, skipNul = FALSE) %>% tibble(commands = .)
+data <- readLines(path, skipNul = FALSE) %>% tibble(x = .)
+
+```
+
+```{r}
+
+cd <- function(path, dir) {
+  
+  if (!is.na(dir)) {
+    if (dir == "..") {
+      return(head(path, -1))
+    }
+    return(c(path, paste0(tail(path, 1), "/", dir)))
+  }
+  return(path)
+}
+
+
+```
+
+```{r}
+
+dir_sizes <- data %>% 
+  extract(x, "cd_dir", "cd (.*)", remove = FALSE) %>% 
+  mutate(path = c(accumulate(cd_dir, cd))) %>% 
+  unnest(path) %>% 
+  filter(str_detect(x, "\\d")) %>% 
+  separate(x, c("size", "file"), sep = " ", convert = TRUE) %>% 
+  group_by(path) %>% 
+  summarize(size = sum(size))
+
+dir_sizes %>% 
+  filter(size < 100000) %>% 
+  summarize(sum(size))
+
+
+dir_sizes %>% 
+  filter(size > 40389918 + 30000000 - 70000000) %>% summarize(min(size))
+
+```
+
+
+## Part1
+
+```{r}
+
+directories <- data %>% 
+  rename(commands = x) %>% 
+  mutate(counter = lead(if_else(commands == "$ ls", 1, 0), 1), 
+         counter = if_else(is.na(counter), 0, counter),
+         groups = cumsum(counter), 
+         is_parent = if_else(counter == 1, "parent", "child"),
+         is_directory = if_else(str_detect(commands, "dir") | str_detect(commands, "\\$ cd"), "directory", "file"), 
+         group_relationship = paste0(is_parent, "_" ,groups),
+         cd_up_counter = cumsum(if_else(str_detect(commands, "\\.\\."), 1, 0)),
+         cd_down_counter = cumsum(if_else(str_detect(commands, "cd ([A-Z]|[a-z]|\\/)"), 1, 0)),
+         tree_depth = cd_down_counter - cd_up_counter) %>% 
+  filter(!str_detect(commands, "ls")) %>% 
+  filter(!str_detect(commands, "\\$ cd \\.")) %>% 
+  mutate(commands = str_replace(commands, "(\\$ cd )|(dir )" , "")) %>% 
+  separate(commands, into = c("size", "name"), sep = "\\s", fill = "left") %>% 
+  mutate(size = if_else(is.na(size), 0, as.numeric(size))) %>% 
+  select(-c(counter, cd_down_counter))
+  
+rollup <- directories %>% 
+  group_by(groups, is_parent) %>% 
+  summarise(folder_file_size = sum(size), .groups = "drop") %>% 
+  mutate(folder_file_size = lag(folder_file_size, 1)) %>% 
+  filter(is_parent == "parent")
+
+folders <- directories %>% 
+  filter(is_directory == "directory") %>% 
+  left_join(rollup, by = c("groups", "is_parent")) %>% 
+  select(-c(size, is_directory, tree_depth, cd_up_counter)) %>% 
+  mutate(folder_file_size = if_else(is.na(folder_file_size), 0, folder_file_size)) #%>% 
+
+parents <- folders %>% 
+  filter(is_parent == "parent") %>% 
+  select(name, groups, folder_file_size)
+
+recursive <- folders %>% 
+  select(name, groups, folder_file_size, is_parent)
+
+pure_children <- NULL
+
+while (nrow(recursive) > 0) {
+
+recursive <- recursive %>% 
+  group_by(name) %>% 
+  mutate(next_family = lead(is_parent, 1), 
+         new_group = if_else((is_parent == "child" & is_parent != next_family), lead(groups, 1), groups), 
+         folder_file_size = if_else((is_parent == "child" & is_parent != next_family), 
+                                    folder_file_size + if_else(is.na(lead(folder_file_size, 1)), 0, lead(folder_file_size, 1)), 
+                                    folder_file_size)
+    ) %>% 
+  ungroup() 
+
+pure_children <- bind_rows(pure_children, recursive %>% filter(is_parent == "child" & next_family == "parent"))
+
+recursive <- recursive %>% 
+  filter(!(is_parent == "child" & next_family == "parent")) %>% 
+  filter(!(is_parent == "parent" & next_family == "parent"))
+
+}
+
+children_folder_size <- pure_children %>% 
+  group_by(groups) %>% 
+  summarise(children_folder_size = sum(folder_file_size))
+
+group_folders <- parents %>% 
+  left_join(children_folder_size, by = "groups") %>% 
+  mutate(children_folder_size = if_else(is.na(children_folder_size), 0, children_folder_size), 
+         full_size = folder_file_size + children_folder_size) %>% 
+  select(name, groups, full_size)
+
+group_folders %>% 
+  filter(full_size < 100000) %>% 
+  summarise(sum(full_size))
+
+```
+
+## Part2
+
+```{r}
+
+
+```
+

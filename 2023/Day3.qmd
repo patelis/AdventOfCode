@@ -1,0 +1,374 @@
+---
+title: "Day3"
+author: "Konstantinos Patelis"
+format: html
+editor: visual
+---
+
+## Day 3
+
+### Data
+
+```{r}
+
+library(tidyverse)
+
+data <- readLines(here::here("2023", "data", "day3_data.txt"), warn = FALSE) 
+
+mat <- data |> 
+  strsplit(split = "") |> 
+  simplify2array() |> 
+  t()
+
+df <- mat |> 
+  as.data.frame() |> 
+  pivot_longer(cols = V1:V140) |> 
+  group_by(value) |> 
+  count()
+
+```
+
+### Part 1
+
+```{r}
+
+n <- 140
+numbers <- as.character(0:9)
+threshold <- 0
+
+mask <- (mat %in% c("#", "$", "%", "&", "*", "+", "-", "/", "@", "=")) |> 
+  matrix(nrow = n, ncol = n)
+
+num_mask = matrix(data = rep(0, n*n), nrow = n, ncol = n)
+
+for (i in 2:(n-1)) {
+
+  for (j in 2:(n-1)) {
+
+    if (mask[i, j] == TRUE) {
+
+      for (ii in (i-1):(i+1)) {
+
+        for (jj in (j-1):(j+1)) {
+
+          if (mat[ii, jj] %in% numbers) {num_mask[ii, jj] = 1}
+
+        }
+      }
+    }
+  }
+}
+
+while (sum(num_mask, na.rm = TRUE) > threshold) {
+  
+  threshold <- sum(num_mask, na.rm = TRUE)
+  
+  for (i in 1:n) {
+    for (j in 2:(n-1)) {
+      
+      if (num_mask[i,j] > 0) {
+        
+        if (mat[i, j+1] %in% numbers) {
+          
+          num_mask[i, j+1] = 1
+          num_mask[i, j] = 2
+          
+          }
+        
+        if (mat[i, j-1] %in% numbers) {
+          
+          if (num_mask[i, j] == 2) {
+            
+            num_mask[i, j-1] = 3
+            
+          } else if (num_mask[i, j] == 3) {
+            
+            num_mask[i, j-1] = 4
+            
+          } else {
+            
+            num_mask[i, j-1] = 2
+            
+          }
+        }
+      }
+    }
+  }
+}
+
+num_mask[num_mask == 0] <- NA
+
+num_mask <- 10^(num_mask - 1)
+num_mask[is.na(num_mask)] = 0
+
+mat_num <- as.numeric(mat)
+mat_num[is.na(mat_num)] = 0
+
+mat_parts <- mat_num * num_mask
+sum(mat_parts, na.rm = TRUE)
+
+#546312
+
+```
+
+### Part 2
+
+```{r}
+
+n <- 140
+numbers <- as.character(0:9)
+threshold <- 0
+
+mask <- (mat == "*") |> 
+  matrix(nrow = n, ncol = n)
+
+num_mask = matrix(data = rep(0, n*n), nrow = n, ncol = n)
+
+# counter <- 0
+
+# for (i in 2:(n-1)) {
+#   
+#   for (j in 2:(n-1)) {
+#     
+#     if (mask[i, j] == TRUE) {
+# 
+#       for (ii in (i-1):(i+1)) {
+#         
+#         for (jj in (j-1):(j+1)) {
+#           
+#           if (mat[ii, jj] %in% numbers) {
+# 
+#             counter <- counter + 1
+#             
+#             }
+#         }
+#       }
+#     }
+#     
+#     if (counter < 2) {
+#       
+#       mask[i,j] = FALSE
+#       
+#     }
+#     
+#     counter <- 0
+#     
+#   }
+# }
+
+for (i in 2:(n-1)) {
+  
+  for (j in 2:(n-1)) {
+    
+    if (mask[i, j] == TRUE) {
+      
+      for (ii in (i-1):(i+1)) {
+        
+        for (jj in (j-1):(j+1)) {
+          
+          if (mat[ii, jj] %in% numbers) {num_mask[ii, jj] = 1}
+          
+        }
+      }
+    } 
+  }
+}
+
+
+while (sum(num_mask, na.rm = TRUE) > threshold) {
+  
+  threshold <- sum(num_mask, na.rm = TRUE)
+  
+  for (i in 1:n) {
+    for (j in 2:(n-1)) {
+      
+      if (num_mask[i,j] > 0) {
+        
+        if (mat[i, j+1] %in% numbers) {
+          
+          num_mask[i, j+1] = 1
+          num_mask[i, j] = 2
+          
+          }
+        
+        if (mat[i, j-1] %in% numbers) {
+          
+          if (num_mask[i, j] == 2) {
+            
+            num_mask[i, j-1] = 3
+            
+          } else if (num_mask[i, j] == 3) {
+            
+            num_mask[i, j-1] = 4
+            
+          } else {
+            
+            num_mask[i, j-1] = 2
+            
+          }
+        }
+      }
+    }
+  }
+}
+
+num_mask[num_mask == 0] <- NA
+
+num_mask <- 10^(num_mask - 1)
+# num_mask[is.na(num_mask)] = 0
+
+mat_num <- as.numeric(mat)
+# mat_num[is.na(mat_num)] = 0
+
+mat_parts <- mat_num * num_mask
+
+test <- mat_parts
+
+test[mask] = -1
+test[is.na(test)] <- -Inf
+
+# products <- vector("numeric")
+# prod <- 1
+
+li <- list()
+pos <- list()
+
+for (i in 2:(n-1)) {
+  for (j in 2:(n-1)) {
+    
+    num <- c()
+    
+    if (test[i, j] == -1) {
+      
+      for (ii in (i-1):(i+1)) {
+        for (jj in (j-1):(j+3)) {
+    
+          if (ii > 140) {next}
+          if (jj > 140) {next}
+          
+          if ((test[ii, jj] > 0) & (test[ii, jj] < 10)) {
+    
+            num <- c(num, test[ii, jj] + test[ii, jj-1] + test[ii, jj-2])
+    
+          }  
+        }
+      }
+    
+    pos <- c(pos, list(c(i, j)))
+    li <- c(li, list(num))
+    
+    }
+  }
+}
+
+
+df <- tibble(li) |> 
+  mutate(length = map_dbl(li, length)) |> 
+  filter(length == 2) |> 
+  mutate(num_1 = map_dbl(li, \(x) x[[1]]), 
+         num_2 = map_dbl(li, \(x) x[[2]]), 
+         prod = num_1 * num_2) |> 
+  summarise(sum(prod))
+
+sum(products)
+# 87449461
+# 98217877
+# 98180898
+# 98180890
+
+```
+
+```{r}
+
+input_raw <- readLines(here::here("2023", "data", "day3_data.txt"), warn = FALSE)
+# input_raw <- readLines(here::here("2023/day-03-example.txt"))
+
+input <- input_raw |> 
+  strsplit("") |> 
+  do.call(rbind, args = _)
+
+ind <- tidyr::crossing(r = seq_len(nrow(input)), c = seq_len(ncol(input))) |> 
+  dplyr::mutate(
+    v = purrr::map2_chr(r,c, \(r,c) input[r,c]),
+    is_num = v %in% as.character(0:9),
+    is_sym = !is_num & v != "."
+  ) |> 
+  dplyr::mutate(
+    id = dplyr::consecutive_id(is_num),
+    .by = r
+  ) |> 
+  dplyr::mutate(
+    id = paste0(r,"_",id)
+  )
+
+search_index <- crossing(
+  r_diff = c(-1,0,1),
+  c_diff = c(-1,0,1)
+) |> 
+  dplyr::filter(!(r_diff == 0 & c_diff == 0)) |> 
+  dplyr::mutate(join = 1)
+
+p1 <- ind |> 
+  dplyr::filter(is_sym) |> 
+  dplyr::mutate(join = 1) |> 
+  dplyr::left_join(search_index, by = "join",relationship = "many-to-many") |> 
+  dplyr::mutate(
+    search_r = r + r_diff,
+    search_c = c + c_diff
+  ) |> 
+  dplyr::select(-id) |> 
+  dplyr::inner_join(
+    ind |> dplyr::filter(is_num & !is_sym) |> dplyr::select(r,c,n = v, id), 
+    by = c("search_r" = "r", "search_c" = "c")
+  ) |> 
+  dplyr::distinct(search_r, id) |> 
+  dplyr::left_join(
+    ind |> dplyr::select(r, c, id,v), 
+    by = c("search_r" = "r", "id")
+  ) |> 
+  dplyr::group_by(search_r, id) |> 
+  dplyr::summarise(
+    n = paste(v,collapse = "") |> as.numeric() 
+  )
+
+sum(p1$n)
+
+
+```
+
+```{r}
+
+ind |> 
+  dplyr::filter(v == "*") |> 
+  dplyr::mutate(join = 1) |> 
+  dplyr::left_join(search_index, by = "join",relationship = "many-to-many") |> 
+  dplyr::mutate(
+    search_r = r + r_diff,
+    search_c = c + c_diff
+  ) |> 
+  dplyr::select(-id,-r_diff,-c_diff,-join) |> 
+  dplyr::inner_join(
+    ind |> dplyr::filter(is_num & !is_sym) |> dplyr::select(r,c,n = v, id), 
+    by = c("search_r" = "r", "search_c" = "c")
+  ) |> 
+  dplyr::group_by(r,c,v) |> 
+  dplyr::mutate(
+    count_n = length(unique(id))
+  ) |> 
+  dplyr::filter(count_n == 2) |> 
+  dplyr::distinct(r,c,id) |> 
+  dplyr::left_join(
+    ind |> dplyr::select(id, v), 
+    by = c("id")
+  ) |> 
+  dplyr::group_by(r, c, id) |> 
+  dplyr::summarise(
+    v = paste(v.y, collapse = "") |> as.numeric()
+  ) |> 
+  dplyr::summarise(
+    v = prod(v)
+  ) |> 
+  dplyr::ungroup() |> 
+  dplyr::summarise(p2 = sum(v))
+
+```

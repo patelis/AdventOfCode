@@ -1,0 +1,202 @@
+---
+title: "Day9"
+author: "Konstantinos Patelis"
+date: "09/12/2021"
+output: html_document
+---
+
+# Day 9: Smoke Basin
+
+Solution to https://adventofcode.com/2021/day/9
+
+```{r data}
+
+library(tidyverse)
+library(slider)
+library(plotly)
+
+path <- "2021/data/data_day9.txt"
+
+# data <- strsplit(readLines(path), split = NULL) |> 
+#   lapply(as.numeric) |> 
+#   unlist() |> 
+#   matrix(nrow = 100, ncol = 100, byrow = TRUE)
+
+input <- strsplit(readLines(path), split = NULL) %>% 
+  lapply(as.numeric) %>% 
+  tibble(x = .) %>% 
+  unnest_wider(col = "x", names_sep = "")
+
+```
+
+## Part 1
+
+```{r part1}
+
+# Part 1
+
+# tictoc::tic()
+
+# find the minimum of all triplets vertically for each cell
+vertical <- input %>% 
+  mutate(across(.cols = everything(), 
+                .fns = slide_dbl, 
+                .f = ~ min(.x), 
+                .before = 1L, 
+                .after = 1L, 
+                .step = 1L))
+
+# find the minimum of all triplets horizontally for each cell
+horizontal <- input %>% 
+  rowwise() %>%
+  transmute(x = list(slide(c_across(), 
+                           .f = ~ min(.x), 
+                           .before = 1L, 
+                           .after = 1L, 
+                           .step = 1L))) %>% 
+  unnest_wider(col = "x", 
+               names_sep = "")
+
+# find the cells that are minimum across horizontal and vertical triplets
+bool_df <- (input == vertical) & (input == horizontal)
+
+# vector of all low points
+risk <- input[bool_df]
+# removing the nines, 9 cannot be a low point but could be highlighted in the above approach if there is e.g. a 3x3 submatrix with 9s
+risk <- risk[risk < 9]
+sum(risk + 1)
+# 572
+
+# tictoc::toc()
+# 0.31 sec elapsed
+
+
+```
+
+
+## Part 2
+
+```{r part2}
+
+# Part 2
+
+tictoc::tic()
+
+find_basins <- function(sinking_point, search_area, nrows = 100, ncols = 100) {
+  
+  basin <- sinking_point
+  X <- sinking_point[["x"]]
+  Y <- sinking_point[["y"]]
+  
+  Value <- sinking_point[["value"]]
+  
+  # browser()
+  # if (X < 1 | X > 100 | Y < 1 | Y > 100) {
+  #   
+  #   browse()
+  # 
+  # }
+  if (nrow(basin) == 0) return(NULL)
+  if (check[X, Y]) return(NULL)
+  check[X, Y] <<- TRUE
+
+  if (Value == 9) return(NULL)
+  
+  rows <- nrows
+  columns <- ncols
+  area <- search_area
+  
+  # browser()
+  
+  # find_basins_spec <- partial(find_basins, search_area = area, nrows = rows, ncols = columns)
+
+  # search_space <<- area %>% mutate(value = ifelse(x == X & y == Y, 9, value))
+  
+  if (X < rows) {
+    
+    temp <- area %>% 
+      filter(x == X + 1, y == Y)
+      
+    # browser()
+    # check_9[X, Y] <- TRUE
+    # browser()
+    
+    basin <- bind_rows(basin, find_basins(temp, area))
+    
+  }
+  
+  if (X > 1) {
+    
+    temp <- area %>%
+      filter(x == X-1, y == Y)
+    
+    basin <- basin %>% 
+      bind_rows(find_basins(temp, area))
+    
+  }
+  
+  if (Y < columns) {
+    
+    temp <- area %>% 
+      filter(x == X, y == Y + 1)
+    
+    basin <- basin %>% 
+      bind_rows(find_basins(temp, area))
+    
+  }
+  
+  if (X > 1) {
+    
+    temp <- area %>% 
+      filter(x == X, y == Y - 1)
+    
+    basin <- basin %>% 
+      bind_rows(find_basins(temp, area))
+    
+  }
+  
+  # return(basin)
+  basin
+
+}
+
+area <- as_tibble(9*(input == 9) + 1*(bool_df)) %>% 
+  rename_with(~ str_replace(.x, "x", "")) %>% 
+  mutate(x = row_number()) %>% 
+  pivot_longer(cols = -c("x"), names_to = "y", values_to = "value") %>% 
+  mutate(y = as.numeric(y), 
+         role = factor(case_when(
+           value == 9 ~ "wall", 
+           value == 1 ~ "sink", 
+           TRUE ~ "flow"
+         )))
+  
+ggplotly(area %>% ggplot(aes(x, y, color = role)) + 
+           geom_point() + 
+           scale_color_brewer(palette = 4))
+
+sinks <- area %>%
+  filter(value == 1) %>% 
+  mutate(id = row_number())
+
+sinks_list <- sinks %>% 
+  nest_by(id)
+
+check <- input == 9
+
+basins <- map(sinks_list$data, .f = find_basins, search_area = area)
+sinks <- bind_cols(sinks, 
+                   tibble(basins = basins)) %>% 
+  mutate(size = map_dbl(basins, nrow)) %>% 
+  arrange(desc(size)) %>% 
+  slice_head(n = 3)
+
+sizes <- sinks[["size"]]
+
+Reduce(`*`, sizes, init = 1)
+# 847044
+
+tictoc::toc()
+# 42.2 sec elapsed
+
+```

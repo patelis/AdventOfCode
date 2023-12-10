@@ -1,0 +1,46 @@
+---
+title: "Day1"
+author: "Konstantinos Patelis"
+date: "01/12/2022"
+output: html_document
+---
+
+# Day 1: Calorie Counting
+
+Solution to https://adventofcode.com/2022/day/1
+
+```{r}
+
+path <- "2022/data/data_day1.txt"
+data <- readLines(path, skipNul = FALSE)
+
+```
+
+## Part1
+
+```{r}
+
+calorie_counter <- function(data_vec, num_elves = 1){
+  
+  vec <- data_vec |> as.numeric()
+  vec[is.na(vec)] = 0
+  cs <- cumsum(vec)
+  vec <- cs[vec == 0]
+  sum(sort(append(vec[1], diff(vec)), decreasing = TRUE)[1:num_elves])
+  
+}
+
+calorie_counter(data, 1)
+# 69693
+
+```
+
+## Part2
+
+```{r}
+
+calorie_counter(data, 3)
+# 200945
+
+```
+

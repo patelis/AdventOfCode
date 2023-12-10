@@ -1,0 +1,103 @@
+---
+title: "Day2"
+author: "Konstantinos Patelis"
+date: "02/12/2021"
+output: html_document
+---
+
+# Day 2: Dive
+
+Solution to https://adventofcode.com/2021/day/2
+
+```{r libraries}
+
+library(tidyverse)
+
+```
+
+```{r data}
+
+## tidyverse load and prep
+data <- readr::read_delim("2021/data/data_day2.txt", delim = " ", col_names = c("directions", "steps"))
+
+data <- data %>%
+  mutate(steps = ifelse(directions == "up", -1 * steps, steps))
+
+# if we had an additional horizontal direction or more we could generalize like below
+# direction <- tribble(
+#   ~ directions, ~ movement,
+#     "forward",     1,
+#     "backward",   -1, 
+#     "up",         -1, 
+#     "down",        1
+# )
+# 
+# data <- data %>% 
+#   dplyr::left_join(direction, by = "directions") %>% 
+#   dplyr::mutate(steps = movement * steps)
+
+
+## base R load and prep
+data_base <- read.delim("2021/data/data_day2.txt", header = FALSE, sep = " ", col.names = c("directions", "steps"))
+data_base[data_base$directions == "up", "steps"] = -1 * data_base[data_base$directions == "up", "steps"]
+
+```
+
+## Part 1
+
+```{r}
+
+# Part 1
+
+## Same solution
+res <- sum(data[data$directions %in% c("forward", "backward"), "steps"]) * sum(data[data$directions %in% c("up", "down"), "steps"])
+res
+#1507611
+
+res2 <- sum(data_base[data_base$directions %in% c("forward", "backward"), "steps"]) * sum(data_base[data_base$directions %in% c("up", "down"), "steps"])
+res2
+
+```
+
+## Part 2
+
+```{r}
+
+# Part 2
+
+## tidyverse solution
+data_part2 <- data %>% 
+  mutate(horizontal = ifelse(directions == "forward", steps, 0), 
+         vertical = ifelse(directions != "forward", steps, 0), 
+         vertical_cumsum = cumsum(vertical), 
+         depth = vertical_cumsum * horizontal)
+
+sum(data_part2$horizontal) * sum(data_part2$depth)
+# 1880593125
+
+## base R solution
+movement <- data_base[["steps"]]
+direction <- data_base[["directions"]]
+vertical <- rep(0, nrow(data_base) + 1)
+depth <- rep(0, nrow(data_base) + 1)
+
+for (i in 1:nrow(data_base)) {
+  
+  if (direction[i] %in% c("up", "down")) {
+    
+    vertical[i + 1] <- vertical[i] + movement[i]
+    
+  } else if (direction[i] == "forward") {
+    
+    vertical[i + 1] <- vertical[i]
+    depth[i + 1] <- vertical[i + 1] * movement[i]
+   
+  }
+}
+
+sum(depth) * sum(data_base[data_base$directions == "forward", "steps"])
+
+
+```
+
+

@@ -1,0 +1,60 @@
+---
+title: "Day2"
+author: "Konstantinos Patelis"
+format: html
+editor: visual
+---
+
+## Day 2
+
+### Data
+
+```{r}
+data <- readLines(here::here("2023", "data", "day2_data.txt"), warn = FALSE)
+```
+
+
+### Part 1
+
+Cannot have games with more than 12 red cubes, 13 green cubes, and 14 blue cubes
+
+```{r}
+library(tidyverse)
+
+df <- data |> 
+  tibble() |> 
+  separate_wider_delim(col = data, names = c("game_id", "pulls"), delim = ": ") |> 
+  mutate(game_id = as.double(str_replace(game_id, "Game ", ""))) |> 
+  separate_longer_delim(cols = pulls, delim = "; ") |> 
+  mutate(pull_num = row_number(), .by = game_id) |> 
+  separate_longer_delim(col = pulls, delim = ", ") |> 
+  separate_wider_delim(cols = pulls, names = c("cube_number", "color"), delim = " ") |> 
+  mutate(pull_num = as.double(pull_num), cube_number = as.double(cube_number))
+
+impossible_ids <- df |> 
+  filter( (cube_number > 12 & color == "red") | (cube_number > 13 & color == "green") | (cube_number > 14 & color == "blue")  ) |> 
+  select(game_id) |> 
+  distinct() 
+
+part1 <- df |> 
+  anti_join(impossible_ids, by = "game_id") |> 
+  pull(game_id) |> 
+  unique() |> 
+  sum()
+
+```
+
+### Part 2
+
+```{r}
+
+part2 <- df |> 
+  group_by(game_id, color) |> 
+  summarise(cubes_required = max(cube_number), .groups = "drop") |> 
+  pivot_wider(names_from = color, values_from = cubes_required) |> 
+  mutate(power = red * blue * green) |> 
+  pull(power) |> 
+  sum()
+
+```
+

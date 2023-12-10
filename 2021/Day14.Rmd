@@ -1,0 +1,133 @@
+---
+title: "Day14"
+author: "Konstantinos Patelis"
+date: "14/12/2021"
+output: html_document
+---
+
+# Day 14: Extended Polymerization
+
+Solution to https://adventofcode.com/2021/day/14
+
+```{r data}
+
+library(tidyverse)
+library(slider)
+
+path <- "2021/data/data_day14.txt"
+
+data <- readLines(path)
+
+replacements <- data[3:length(data)]
+
+replacements_tbl <- tibble(x = replacements) %>% 
+  extract(col = x, into = c("init", "to_insert"), regex = "([A-Z]+) -> ([A-Z])") %>% 
+  extract(col =  init, into = c("init_1", "init_2"), regex = "([A-Z])([A-Z])") 
+
+chain <- data[[1]]
+
+```
+
+## Part 1
+
+```{r part1}
+
+# Optimised approach
+
+last_char <- chain |> strsplit(split = NULL) |> unlist() |> tail(1)
+
+chain_tbl <- chain %>% 
+  strsplit(split = NULL) %>% 
+  unlist() %>% 
+  slide_chr(paste0, collapse = "", .before = 0L, .after = 1L, .step = 1L, .complete = FALSE) %>% 
+  table() %>% 
+  as_tibble() %>% 
+  rename(x = ".") %>% 
+  filter(str_count(x) == 2) %>% 
+  separate(col = "x", into = c("x1", "x2"), sep = 1)
+
+for (i in 1:10) {
+  
+  temp <- chain_tbl %>% 
+    left_join(replacements_tbl, 
+              by = c("x1" = "init_1", 
+                     "x2" = "init_2"))
+  
+  left <- temp %>% 
+    select(x1, x2 = to_insert, n)
+  
+  right <- temp %>% 
+    select(x1 = to_insert, x2, n)
+  
+  chain_tbl <- #chain_tbl %>% 
+    bind_rows(left, right) %>% 
+    group_by(x1, x2) %>% 
+    count(wt = n) %>% 
+    ungroup()
+  
+  }
+
+part1_count <- chain_tbl %>% 
+  group_by(x1) %>% 
+  count(wt = n) %>% 
+  ungroup()
+
+# Since we're counting from the first char, we must add one count for the last character of the initial string
+part1_count <- part1_count %>% 
+  mutate(n = ifelse(x1 == last_char, n + 1, n))
+
+max(part1_count$n) - min(part1_count$n)
+# 2797
+
+```
+
+
+## Part 2
+
+```{r part2}
+
+options(scipen=999)
+
+chain_tbl <- chain %>% 
+  strsplit(split = NULL) %>% 
+  unlist() %>% 
+  slide_chr(paste0, collapse = "", .before = 0L, .after = 1L, .step = 1L, .complete = FALSE) %>% 
+  table() %>% 
+  as_tibble() %>% 
+  rename(x = ".") %>% 
+  filter(str_count(x) == 2) %>% 
+  separate(col = "x", into = c("x1", "x2"), sep = 1)
+
+for (i in 1:40) {
+  
+  temp <- chain_tbl %>% 
+    left_join(replacements_tbl, 
+              by = c("x1" = "init_1", 
+                     "x2" = "init_2"))
+  
+  left <- temp %>% 
+    select(x1, x2 = to_insert, n)
+  
+  right <- temp %>% 
+    select(x1 = to_insert, x2, n)
+  
+  chain_tbl <-
+    bind_rows(left, right) %>% 
+    group_by(x1, x2) %>% 
+    count(wt = n) %>% 
+    ungroup()
+  
+  }
+
+part2_count <- chain_tbl %>% 
+  group_by(x1) %>% 
+  count(wt = n) %>% 
+  ungroup()
+
+part2_count <- part2_count %>% 
+  mutate(n = ifelse(x1 == last_char, n + 1, n))
+
+max(part2_count$n) - min(part2_count$n)
+# 2926813379532
+
+```

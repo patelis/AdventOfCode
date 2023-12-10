@@ -1,0 +1,75 @@
+---
+title: "Day4"
+author: "Konstantinos Patelis"
+format: html
+editor: visual
+---
+
+## Day 4
+
+### Data
+
+```{r}
+library(tidyverse)
+
+data <- readLines(here::here("2023", "data", "day4_data.txt"), warn = FALSE) 
+```
+
+```{r}
+
+data |> 
+  tibble() |> 
+  separate_wider_delim(cols = data, delim = ": ", names = c("card", "numbers")) |> 
+  separate_wider_delim(cols = numbers, delim = " | ", names = c("win", "own")) |> 
+  mutate(win = str_replace_all(win, " +", ","), 
+         own = str_replace_all(own, " +", ",")) |> 
+  separate_longer_delim(win, delim = ",") |> 
+  separate_longer_delim(own, delim = ",") |> 
+  mutate(win = as.numeric(win), own = as.numeric(own)) |> 
+  filter(!is.na(win)) |> 
+  filter(!is.na(own)) |> 
+  mutate(same = win == own) |> 
+  group_by(card) |> 
+  summarise(wins = sum(same)) |> 
+  filter(wins != 0) |> 
+  mutate(points = 2**(wins - 1)) |> 
+  summarise(sum(points))
+
+```
+
+```{r}
+part2 <- data |> 
+  tibble() |> 
+  separate_wider_delim(cols = data, delim = ": ", names = c("card", "numbers")) |> 
+  separate_wider_delim(cols = numbers, delim = " | ", names = c("win", "own")) |> 
+  mutate(win = str_replace_all(win, " +", ","), 
+         own = str_replace_all(own, " +", ",")) |> 
+  separate_longer_delim(win, delim = ",") |> 
+  separate_longer_delim(own, delim = ",") |> 
+  mutate(win = as.numeric(win), own = as.numeric(own)) |> 
+  filter(!is.na(win)) |> 
+  filter(!is.na(own)) |> 
+  mutate(same = win == own) |> 
+  group_by(card) |> 
+  summarise(wins = sum(same)) |> 
+  mutate(id = as.numeric(str_replace_all(card, "Card ", "")), 
+         owned = 1)
+
+#part2 <- part2 |> head(20)
+
+ids <- part2$id
+wins <- part2$wins
+owned <- part2$owned
+
+for (i in 1:length(ids)) {
+  if (wins[i] > 0) {
+    for (w in 1:wins[i]) {
+
+      owned[i + w] <- (owned[i + w] + owned[i])
+
+    }
+  }
+}
+
+
+```

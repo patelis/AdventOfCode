@@ -1,0 +1,144 @@
+---
+title: "Day8"
+author: "Konstantinos Patelis"
+format: html
+editor: visual
+---
+
+## Day 8
+
+### Data
+
+```{r}
+library(tidyverse)
+
+data <- readLines(here::here("2023", "data", "day8_data.txt"), warn = FALSE)
+
+steps <- data[1] |> 
+  strsplit("") |> 
+  unlist()
+
+nodes <- data[3:length(data)] |> 
+  tibble(data = _) |> 
+  separate_wider_delim(cols = "data", delim = " = (", names = c("start", "path")) |> 
+  separate_wider_delim(cols = "path", delim = ", ", names = c("L", "R")) |> 
+  mutate(R = str_replace(R, "\\)", ""))
+
+```
+
+### Part 1
+
+```{r}
+
+node <- "AAA"
+counter <- 0
+
+
+while (node != "ZZZ") {
+  
+  for (step in steps) {
+    
+    node <- nodes |> 
+      filter(start == node) |> 
+      pull(.data[[step]])
+    
+    counter <- counter + 1
+    
+    if (node == "ZZZ") break
+    
+  }
+  
+}
+
+
+```
+
+--- Part Two --- The sandstorm is upon you and you aren't any closer to escaping the wasteland. You had the camel follow the instructions, but you've barely left your starting position. It's going to take significantly more steps to escape!
+
+What if the map isn't for people - what if the map is for ghosts? Are ghosts even bound by the laws of spacetime? Only one way to find out.
+
+After examining the maps a bit longer, your attention is drawn to a curious fact: the number of nodes with names ending in A is equal to the number ending in Z! If you were a ghost, you'd probably just start at every node that ends with A and follow all of the paths at the same time until they all simultaneously end up at nodes that end with Z.
+
+For example:
+
+LR
+
+11A = (11B, XXX) 11B = (XXX, 11Z) 11Z = (11B, XXX) 22A = (22B, XXX) 22B = (22C, 22C) 22C = (22Z, 22Z) 22Z = (22B, 22B) XXX = (XXX, XXX) Here, there are two starting nodes, 11A and 22A (because they both end with A). As you follow each left/right instruction, use that instruction to simultaneously navigate away from both nodes you're currently on. Repeat this process until all of the nodes you're currently on end with Z. (If only some of the nodes you're on end with Z, they act like any other node and you continue as normal.) In this example, you would proceed as follows:
+
+Step 0: You are at 11A and 22A. Step 1: You choose all of the left paths, leading you to 11B and 22B. Step 2: You choose all of the right paths, leading you to 11Z and 22C. Step 3: You choose all of the left paths, leading you to 11B and 22Z. Step 4: You choose all of the right paths, leading you to 11Z and 22B. Step 5: You choose all of the left paths, leading you to 11B and 22C. Step 6: You choose all of the right paths, leading you to 11Z and 22Z. So, in this example, you end up entirely on nodes that end in Z after 6 steps.
+
+Simultaneously start on every node that ends with A. How many steps does it take before you're only on nodes that end with Z?
+
+### Part 2
+
+```{r}
+
+nodes <- nodes |> 
+  mutate(start_nodes = str_sub(start, 3L, 3L))
+
+start_nodes <- nodes |> 
+  filter(start_nodes == "A") |> 
+  pull(start)
+  
+library(doFuture)
+plan(multisession, workers = 6)
+
+z_cases <- foreach(node = start_nodes) %dofuture% {
+  
+  counter <- 0
+  encounters <- c()
+  
+  while (counter <= 1e6) {
+    
+    for (step in steps) {
+      
+      node <- nodes |> 
+        filter(start == node) |> 
+        pull(.data[[step]])
+      
+      last <- node |> 
+        str_sub(3L, 3L)
+      
+      counter <- counter + 1
+      
+      if (last == "Z") {
+        
+        encounters <- c(encounters, counter)
+      
+      }
+        
+    }
+  }
+  
+  encounters 
+  
+}
+
+z_cases %>% 
+  unlist() %>% 
+  tibble(data = .) %>% 
+  group_by(data) %>% 
+  count(sort = TRUE)
+  
+
+saveRDS(z_cases, "test.RDS")
+
+```
+
+```{r}
+
+z_cases <- readRDS("test.RDS")
+
+t <- map(z_cases, \(x) x[[1]]) %>% 
+  unlist()
+
+library(pracma)
+
+s <- reduce(t, Lcm)
+
+options(digits = 22)
+s
+options(scipen = 10^26)
+
+```
+

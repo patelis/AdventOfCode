@@ -1,0 +1,131 @@
+---
+title: "Day6"
+author: "Konstantinos Patelis"
+date: "06/12/2021"
+output: html_document
+---
+
+# Day 6: Lanternfish
+
+Solution to https://adventofcode.com/2021/day/6
+
+```{r data}
+
+# tictoc::tic()
+
+path <- "2021/data/data_day6.txt"
+
+data <- as.numeric(strsplit(readLines(path), split = ",")[[1]])
+
+first_reproduction <- 8
+
+# tictoc::toc()
+# 0 sec elapsed
+
+```
+
+## Part 1
+
+First attempt at part 1. This works fine but will encounter allocation issues when days increase in part 2.
+
+```{r part1}
+
+# Part 1
+
+# tictoc::tic()
+
+days <- 80
+reproduction_cycle <- data
+
+population_growth <- function(reproduction_cycle, days) {
+  
+  for (i in 1:days) {
+    
+    rep_prev <- reproduction_cycle
+  
+    reproduction_cycle[rep_prev == 0] <- 6
+  
+    reproduction_cycle[rep_prev != 0] <- reproduction_cycle[rep_prev != 0] - 1
+  
+    new_fish <- rep(8, sum(rep_prev == 0))
+
+    reproduction_cycle <- c(reproduction_cycle, new_fish)
+    
+  }
+  
+  print(length(reproduction_cycle))
+  
+}
+
+population_growth(reproduction_cycle, days)
+# 376194
+
+# tictoc::toc()
+# 0.11 sec elapsed
+
+```
+
+Second attempt at part 1 to improve memory efficiency
+
+```{r part1_second_attempt}
+
+# tictoc::tic()
+
+days <- 80
+reproduction_table <- data.frame(table(data))
+reproduction_table[["data"]] <- as.numeric(reproduction_table[["data"]])
+max_day_original <- max(reproduction_table[["data"]])
+additional_days <- data.frame(data = (max_day_original + 1):first_reproduction, Freq = 0)
+reproduction_table <- rbind(reproduction_table, additional_days)
+
+population_growth_table <- function(population_table, days) {
+  
+  for (day in 1:days) {
+    
+    table_prev <- population_table
+    
+    population_table <- population_table[population_table[["data"]] != 0, ]
+    
+    population_table[["data"]] <- population_table[["data"]] - 1
+    
+    to_add <- if (length(table_prev[table_prev[["data"]] == 0, "Freq"] != 0)) table_prev[table_prev[["data"]] == 0, "Freq"] else 0
+    
+    population_table[population_table[["data"]] == 6, "Freq"] <- population_table[population_table[["data"]] == 6, "Freq"] + to_add
+    
+    new_fish <- data.frame(data = 8, Freq = to_add)
+    
+    population_table <- rbind(population_table, new_fish)
+    
+  }
+  
+  sum(population_table[["Freq"]])
+  
+}
+
+population_growth_table(reproduction_table, days)
+# 376194
+
+# tictoc::toc()
+# 0.06 sec elapsed
+
+```
+
+
+## Part 2
+
+```{r part2}
+
+# Part 2
+
+# tictoc::tic()
+
+days <- 256
+
+options(scipen = 999)
+population_growth_table(reproduction_table, days)
+# 1693022481538
+
+# tictoc::toc()
+# 0.11 sec elapsed
+
+```

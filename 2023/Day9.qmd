@@ -1,0 +1,57 @@
+---
+title: "Day9"
+author: "Konstantinos Patelis"
+format: html
+---
+
+## Day 9
+
+### Data
+
+```{r}
+data <- readLines(here::here("2023", "data", "day9_data.txt"), warn = FALSE) |> 
+  strsplit(" ") |> 
+  lapply(as.numeric)
+```
+
+### Part 1
+
+```{r}
+library(future.apply)
+plan(multisession, workers = 10)
+
+pyramid_sum <- function(vec) {
+  
+  pyramid <- c(last(vec))
+  vec_diff <- vec
+  
+  while (!all(vec_diff == 0)) {
+    
+    vec_diff <- diff(vec)
+    vec <- vec_diff
+    pyramid <- append(pyramid, last(vec_diff))
+    
+  }
+  
+  sum(pyramid)
+  
+}
+
+part1 <- future_sapply(data, pyramid_sum)
+
+sum(part1)
+
+```
+
+### Part 2
+
+```{r}
+
+data_rev <- lapply(data, rev)
+
+part2 <- future_sapply(data_rev, pyramid_sum)
+
+sum(part2)
+
+```
+

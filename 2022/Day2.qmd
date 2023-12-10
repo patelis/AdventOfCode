@@ -1,0 +1,70 @@
+---
+title: "Day2"
+author: "Konstantinos Patelis"
+format: html
+---
+
+# Day 2: Rock Paper Scissors
+
+Solution to https://adventofcode.com/2022/day/2
+
+```{r}
+
+library(tidyverse)
+path <- "2022/data/data_day2.txt"
+data <- read_delim(path, delim = " ", col_names = FALSE)
+
+```
+
+## Part1
+
+```{r}
+
+point_system <- tibble(opp = c("A", "B", "C"), you = c("X", "Y", "Z"), points = c(1, 2, 3))
+
+data %>% 
+  left_join(point_system, by = c("X1" = "opp")) %>% 
+  left_join(point_system, by = c("X2" = "you")) %>% 
+#  rename(points_opp = points.x, points_you = points.y) %>% 
+  mutate(diff = points.y - points.x, 
+         res = case_when(
+           diff == 2 ~ 0,
+           diff > 0 | diff == -2 ~ 6, 
+           diff == 0 ~ 3,
+           TRUE ~ 0
+           ), 
+         points = res + points.y
+         ) %>% 
+  summarise(score = sum(points))
+
+```
+
+## Part2
+
+```{r}
+
+
+data %>% 
+  mutate(
+    res = case_when(
+      X2 == "Z" ~ 6, 
+      X2 == "Y" ~ 3, 
+      TRUE ~ 0
+      ), 
+    hand_point = case_when(
+      res == 6 & X1 == "A" ~ 2, 
+      res == 6 & X1 == "B" ~ 3,
+      res == 6 & X1 == "C" ~ 1, 
+      res == 3 & X1 == "A" ~ 1, 
+      res == 3 & X1 == "B" ~ 2,
+      res == 3 & X1 == "C" ~ 3, 
+      res == 0 & X1 == "A" ~ 3, 
+      res == 0 & X1 == "B" ~ 1,
+      res == 0 & X1 == "C" ~ 2 
+      ), 
+    score = res + hand_point
+  ) %>% 
+  summarise(score = sum(score))
+
+```
+

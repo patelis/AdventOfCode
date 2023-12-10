@@ -1,0 +1,193 @@
+---
+title: "Day8"
+author: "Konstantinos Patelis"
+date: "08/12/2021"
+output: html_document
+---
+
+# Day 8: Seven Segment Search
+
+Solution to https://adventofcode.com/2021/day/8
+
+```{r data}
+
+path <- "2021/data/data_day8.txt"
+
+data <- readLines(path) |> strsplit(split = " | ")
+
+signal <- lapply(data, FUN = (\(x) x[1:10]))
+outputs <- lapply(data, FUN = (\(x) x[12:15]))
+
+```
+
+## Part 1
+
+```{r part1}
+
+# Part 1
+
+# tictoc::tic()
+
+part1 <- unlist(lapply(output, nchar))
+
+sum(part1 %in% c(2, 4, 3, 7))
+# 519
+
+# tictoc::toc()
+# 0 sec elapsed
+
+```
+
+## Part 2
+
+```{r part2}
+
+# Part 2
+
+# tictoc::tic()
+
+encoder <- function(signal) {
+  
+  unlist_split_easy_numbers <- function(string_vector, number_of_segments) {
+  
+    string_vector[nchar(string_vector) == number_of_segments] |> 
+      strsplit(split = NULL) |> 
+      unlist()
+  
+  }
+  
+  one <- unlist_split_easy_numbers(signal, 2)
+  four <- unlist_split_easy_numbers(signal, 4)
+  seven <- unlist_split_easy_numbers(signal, 3)
+  eight <- unlist_split_easy_numbers(signal, 7)
+  
+  five_segments <- signal[nchar(signal) == 5] |>
+    strsplit(split = NULL)
+  
+  six_segments <- signal[nchar(signal) == 6] |>
+    strsplit(split = NULL)
+  
+  top <- seven[!(seven %in% one)]
+  
+  three_bool <- five_segments |> 
+    sapply(FUN = \(x) sum(x %in% one)) == 2
+  
+  three <- unlist(five_segments[three_bool])
+  
+  middle_and_top_left <- four[!(four %in% one)]
+  bottom_and_bottom_left <- eight[!(eight %in% c(seven, middle_and_top_left))]
+
+  bottom_left <- bottom_and_bottom_left[!(bottom_and_bottom_left %in% three)]
+  bottom <- bottom_and_bottom_left[!(bottom_and_bottom_left %in% bottom_left)]
+  
+  two_bool <- five_segments |>
+    sapply(FUN = \(x) sum(x %in% bottom_left)) == 1
+
+  two <- unlist(five_segments[two_bool])
+  
+  five <- unlist(five_segments[!(two_bool + three_bool)])
+  
+  top_right <- three[!(three %in% five)]
+  bottom_right <- one[!(one %in% top_right)]
+  
+  six_bool <- six_segments |>
+    sapply(FUN = \(x) sum(!(top_right %in% x))) == 1
+
+  six <- unlist(six_segments[six_bool])
+  
+  nine_bool <- six_segments |>
+    sapply(FUN = \(x) sum(!(bottom_left %in% x))) == 1
+
+  nine <- unlist(six_segments[nine_bool])
+  
+  zero <- unlist(six_segments[!(nine_bool + six_bool)])
+  
+  middle <- eight[!(eight %in% zero)]
+  top_left <- middle_and_top_left[!(middle_and_top_left %in% middle)]
+  
+  pattern <- list(top = top, 
+                  middle = middle, 
+                  bottom = bottom, 
+                  top_right = top_right, 
+                  bottom_right = bottom_right,
+                  top_left = top_left,
+                  bottom_left = bottom_left, 
+                  zero = sort(zero),
+                  one = sort(one), 
+                  two = sort(two),
+                  three = sort(three), 
+                  four = sort(four), 
+                  five = sort(five), 
+                  six = sort(six), 
+                  seven = sort(seven), 
+                  eight = sort(eight), 
+                  nine = sort(nine)
+                  )
+  
+  pattern
+  
+}
+
+decoder <- function(output, encoding) {
+
+  simple_numbers_decoder <- function(string_vector, number, segment_length) {
+    
+    if (any(nchar(string_vector) == segment_length)) {
+      
+      sum(number * 10 ^ (4 - which(nchar(string_vector) == segment_length)))
+      
+    } else {
+      
+      0
+      
+    }
+    
+  }
+  
+  two_bool <- output |>
+    strsplit(split = NULL) |>
+    sapply(FUN = \(x) sum((length(x) == 5) & !(encoding$bottom_right %in% x))) == 1
+  
+  three_bool <- output |>
+    strsplit(split = NULL) |>
+    sapply(FUN = \(x) sum((length(x) == 5) & (encoding$bottom_right %in% x) & (encoding$top_right %in% x))) == 1
+           
+  five_bool <- output |>
+    strsplit(split = NULL) |>
+    sapply(FUN = \(x) sum((length(x) == 5) & (encoding$bottom_right %in% x) & !(encoding$top_right %in% x))) == 1
+  
+  six_bool <- output |> 
+    strsplit(split = NULL) |>
+    sapply(FUN = \(x) sum((length(x) == 6) & !(encoding$top_right %in% x))) == 1
+  
+  nine_bool <- output |> 
+    strsplit(split = NULL) |>
+    sapply(FUN = \(x) sum((length(x) == 6) & !(encoding$bottom_left %in% x))) == 1
+  
+  power_10 <- c(10 ^3, 10^2, 10, 1)
+
+  number_list <- NULL
+  number_list$one <- simple_numbers_decoder(output, 1, 2)
+  number_list$two <- sum(2 * two_bool * power_10)
+  number_list$three <- sum(3 * three_bool * power_10)
+  number_list$four <- simple_numbers_decoder(output, 4, 4)
+  number_list$five <- sum(5 * five_bool * power_10)
+  number_list$six <- sum(6 * six_bool * power_10)
+  number_list$seven <- simple_numbers_decoder(output, 7, 3)
+  number_list$eight <- simple_numbers_decoder(output, 8, 7)
+  number_list$nine <- sum(9 * nine_bool * power_10)
+  
+  number <- Reduce(`+`, number_list, init = 0)
+  number
+  
+}
+
+encodings <- lapply(signal, encoder)
+decoded <- mapply(decoder, outputs, encodings)
+sum(decoded)
+# 1027483
+
+# tictoc::toc()
+# 0.2 sec elapsed
+
+```

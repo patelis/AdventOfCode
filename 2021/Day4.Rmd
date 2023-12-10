@@ -1,0 +1,159 @@
+---
+title: "Day4"
+author: "Konstantinos Patelis"
+date: "04/12/2021"
+output: html_document
+---
+
+# Day 4: Giant Squid
+
+Solution to https://adventofcode.com/2021/day/4
+
+```{r data}
+
+# tictoc::tic()
+
+path <- "2021/data/data_day4.txt"
+
+data <- readLines(path)
+
+bingo_board_size <- 5
+
+numbers_called_out <- strsplit(data[[1]], split = ",")
+numbers_called_out <- as.numeric(numbers_called_out[[1]])
+
+data <- data[-1]
+data <- data[data != ""]
+
+bingo_boards <- vector("list", length = length(data)/bingo_board_size)
+bingo_players <- length(bingo_boards)
+
+# Annoying process to create matrices of all bingo cards
+
+for (i in 1:bingo_players) {
+  
+  bingo_boards[[i]] <- data[(1 + (i - 1) * bingo_board_size):(bingo_board_size + (i - 1) * bingo_board_size)] |> 
+    strsplit(split = " ")
+
+  bingo_boards[[i]] <- lapply(1:bingo_board_size, FUN = (\(x) bingo_boards[[i]][[x]][bingo_boards[[i]][[x]] != ""])) |>
+    unlist() |>
+    as.numeric()|>
+    matrix(nrow = bingo_board_size, ncol = bingo_board_size, byrow = TRUE)
+  
+}
+
+first_five <- numbers_called_out[1:bingo_board_size]
+remaining_numbers <- numbers_called_out[-(1:bingo_board_size)]
+
+# tictoc::toc()
+# 0.03 sec elapsed
+
+```
+
+## Part 1
+
+```{r part1}
+
+# Part 1
+
+# tictoc::tic()
+
+bingo_numbers <- first_five
+check_bingo <- vector("list", length = length(data)/bingo_board_size)
+turn_counter <- 1
+win_flag <- FALSE
+  
+while (!win_flag) {
+  
+  check_bingo <- lapply(1:bingo_players, FUN = (\(x) structure(bingo_boards[[x]] %in% bingo_numbers, dim = dim(bingo_boards[[x]]))))
+  
+  col_sums <- lapply(1:bingo_players, FUN = (\(x) colSums(check_bingo[[x]])))
+  row_sums <- lapply(1:bingo_players, FUN = (\(x) rowSums(check_bingo[[x]])))
+  
+  col_win_vec <- unlist(lapply(1:bingo_players, FUN = (\(x) bingo_board_size %in% col_sums[[x]])))
+  row_win_vec <- unlist(lapply(1:bingo_players, FUN = (\(x) bingo_board_size %in% row_sums[[x]])))
+  
+  col_win <- any(col_win_vec)
+  row_win <- any(row_win_vec)
+  
+  if (col_win | row_win) {
+    
+    winning_position <- if (col_win) which(col_win_vec) else which(row_win_vec)
+    win_flag <- TRUE
+    
+  } else {
+    
+    bingo_numbers <- c(first_five, remaining_numbers[1:turn_counter])
+    turn_counter <- turn_counter + 1
+    
+  }
+  
+}
+
+unmarked_sum <- sum(bingo_boards[[winning_position]][!check_bingo[[winning_position]]])
+last_called_out <- numbers_called_out[turn_counter + bingo_board_size - 1]
+
+unmarked_sum * last_called_out
+# 45031
+
+# tictoc::toc()
+# 0.04 sec elapsed
+
+```
+
+## Part 2
+
+```{r part2}
+
+# Part 2
+
+## The solution is pretty similar to part 1, the difference is we need to check for all instead of any, 
+## keep the win_vec of previous turn to figure out which board is the last to win
+## and check that a board has not won in either rows OR cols 
+
+# tictoc::tic()
+
+bingo_numbers <- first_five
+check_bingo <- vector("list", length = length(data)/bingo_board_size)
+turn_counter <- 1
+loss_flag <- FALSE
+  
+while (!loss_flag) {
+  
+  check_bingo <- lapply(1:bingo_players, FUN = (\(x) structure(bingo_boards[[x]] %in% bingo_numbers, dim = dim(bingo_boards[[x]]))))
+  
+  col_sums <- lapply(1:bingo_players, FUN = (\(x) colSums(check_bingo[[x]])))
+  row_sums <- lapply(1:bingo_players, FUN = (\(x) rowSums(check_bingo[[x]])))
+  
+  col_win_vec <- unlist(lapply(1:bingo_players, FUN = (\(x) bingo_board_size %in% col_sums[[x]])))
+  row_win_vec <- unlist(lapply(1:bingo_players, FUN = (\(x) bingo_board_size %in% row_sums[[x]])))
+  
+  all_win <- all(col_win_vec | row_win_vec)
+  
+  if (all_win) {
+    
+    losing_position <- which(!(col_win_vec_last_turn | row_win_vec_last_turn))
+    loss_flag <- TRUE
+    
+  } else {
+    
+    col_win_vec_last_turn <- col_win_vec
+    row_win_vec_last_turn <- row_win_vec
+      
+    bingo_numbers <- c(first_five, remaining_numbers[1:turn_counter])
+    turn_counter <- turn_counter + 1
+    
+  }
+  
+}
+
+unmarked_sum <- sum(bingo_boards[[losing_position]][!check_bingo[[losing_position]]])
+last_called_out <- numbers_called_out[turn_counter + bingo_board_size - 1]
+
+unmarked_sum * last_called_out
+# 2568
+
+# tictoc::toc()
+# 0.17 sec elapsed
+
+```

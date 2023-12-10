@@ -1,0 +1,55 @@
+---
+title: "Day3"
+author: "Konstantinos Patelis"
+format: html
+---
+
+# Day 3: Rucksack Reorganization
+
+Solution to https://adventofcode.com/2022/day/3
+
+```{r}
+
+path <- "2022/data/data_day3.txt"
+data <- readLines(path)
+
+```
+
+## Part1
+
+```{r}
+
+find_dups <- function(str) {
+  
+  score <- data.frame(letter = c(letters, LETTERS), points = 1:52)
+  chars <- strsplit(str, "")[[1]]
+  chars_1 <- chars[1:(length(chars)/2)]
+  chars_2 <- chars[((length(chars)/2) + 1):(length(chars))]
+  intersect(chars_1, chars_2)
+  score[score[["letter"]] == intersect(chars_1, chars_2), "points"]
+  
+}
+
+sum(sapply(data, find_dups))
+# 8109
+
+```
+
+## Part2
+
+```{r}
+
+find_badge <- function(l) {
+  
+  score <- data.frame(letter = c(letters, LETTERS), points = 1:52)
+  l <- l |> unlist() |> strsplit("")
+  score[score[["letter"]] ==  intersect(intersect(l[[1]], l[[2]]), l[[3]]), "points"]
+
+}
+
+groups <- split(data, ceiling(1:length(data) / 3))
+sum(sapply(groups, find_badge))
+# 2738
+
+```
+

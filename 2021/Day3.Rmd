@@ -1,0 +1,91 @@
+---
+title: "Day3"
+author: "Konstantinos Patelis"
+date: "03/12/2021"
+output: html_document
+---
+
+# Day 3: Binary Diagnostic
+
+Solution to https://adventofcode.com/2021/day/3
+
+```{r data}
+
+data <- read.table("2021/data/data_day3.txt", col.names = "string", colClasses = "character")
+
+str_length <- unique(nchar(data$string))
+
+# Create binary df with base R
+l <- strsplit(data$string, split = NULL)
+df <- do.call(rbind.data.frame, l)
+names(df) <- paste0("bit", 1:str_length)
+df <- as.data.frame(sapply(df, as.integer))
+
+```
+
+## Part 1
+
+```{r part1}
+
+# Part 1
+
+round_col_mean <- function(data) {
+  
+  round(colMeans(data))
+  
+}
+
+convert_binary_df_to_decimal_num <- function(data) {
+  
+  temp <- paste0(data, collapse = "")  
+  temp <- strtoi(temp, base = 2L)
+  temp
+  
+}
+
+gamma <- convert_binary_df_to_decimal_num(round_col_mean(df))
+epsilon <- convert_binary_df_to_decimal_num(round_col_mean(as.data.frame(+!(df)))) # We can quickly invert a binary df with +!(df) (note that this converts to matrix)
+
+gamma * epsilon
+# 1082324
+
+```
+
+## Part 2
+
+```{r part2}
+
+# Part 2
+
+common_filter <- function(data, n = 1, opposite = FALSE) {
+  
+    if (n <= length(data) & nrow(data) > 1) {
+    
+    column <- paste0("bit", n)
+    
+    value_to_filter <- as.numeric(colMeans(data[column]))
+    
+    value_to_filter <- if (value_to_filter == .5) 1 else round(value_to_filter) # round(.5) is 0, solution asks it to be 1 (for the least case we reverse in next line)
+    
+    value_to_filter <- if (opposite) +!value_to_filter else value_to_filter
+
+    data_filtered <- data[data[[column]] == value_to_filter, ]
+    
+    common_filter(data_filtered, n + 1, opposite = opposite)
+    
+  } else {
+
+    convert_binary_df_to_decimal_num(data)
+    
+  }
+  
+}
+
+oxygen <- common_filter(df)
+  
+co2 <- common_filter(df, opposite = TRUE)
+
+oxygen * co2
+# 1353024
+
+```

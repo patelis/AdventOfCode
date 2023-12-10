@@ -1,0 +1,28 @@
+---
+title: "Day6"
+author: "Konstantinos Patelis"
+format: html
+---
+
+# Day 6: Tuning Trouble
+
+Solution to https://adventofcode.com/2022/day/6
+
+```{r}
+library(slider)
+path <- "2022/data/data_day6.txt"
+data <- readLines(path) |> strsplit("") |> unlist()
+```
+
+## Part1
+
+```{r}
+which(sapply(slide(data, unique, .before = 3L), length) == 4)[1]
+```
+
+## Part2
+
+```{r}
+which(sapply(slide(data, unique, .before = 13L), length) == 14)[1]
+```
+

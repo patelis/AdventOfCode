@@ -1,0 +1,166 @@
+---
+title: "Day5"
+author: "Konstantinos Patelis"
+format: html
+editor: visual
+---
+
+## Day 5
+
+### Data
+
+```{r}
+options(scipen = 10^9)
+library(tidyverse)
+
+data <- readLines(here::here("2023", "data", "day5_data.txt"), warn = FALSE) 
+
+seeds <- data[1] |> 
+  str_replace("seeds: ", "") |> 
+  strsplit(" ") |> 
+  unlist() |> 
+  as.numeric() |> 
+  tibble(seeds = _)
+
+map_parser <- function(data, start, end) {
+  
+  df <- data[start:end] |> 
+  #strsplit(" ") |> 
+  tibble(data = _) |> 
+  separate_wider_delim(cols = data, delim = " ", names = c("destination_start", "source_start", "range_length")) |> 
+  mutate(across(.cols = everything(), .fns = as.numeric)) |> 
+  mutate(destination_end = destination_start + range_length - 1, 
+         source_end = source_start + range_length - 1)
+  
+  df
+  
+}
+
+seed_to_soil <- map_parser(data, 4, 35)
+soil_to_fertilizer <- map_parser(data, 38, 66)
+fertilizer_to_water <- map_parser(data, 69, 103)
+water_to_light <- map_parser(data, 106, 130)
+light_to_temp <- map_parser(data, 133, 146)
+temp_to_humidity <- map_parser(data, 149, 180)
+humidity_to_loc <- map_parser(data, 183, 197)
+
+mapping <- function(data, enter_id, exit_id, map) {
+  
+  df <- data |> 
+    cross_join(map) |> 
+    mutate(start_id = .data[[enter_id]]) |> 
+    mutate(in_range = ((start_id <= source_end) & (start_id >= source_start))) |> 
+    filter(in_range == TRUE) |> 
+    mutate(end_id = start_id - source_start + destination_start, 
+           {{exit_id}} := end_id)
+  
+ data_vec <- data |> pull(enter_id)
+ matched_vec <- df |> pull(start_id)
+ non_matched_vec <- setdiff(data_vec, matched_vec)
+ 
+ non_matched <- non_matched_vec |> 
+   tibble(start_id = _) |> 
+   mutate(end_id = start_id)
+
+  df <- df |> 
+    rows_insert(non_matched, by = "start_id") |> 
+    mutate({{enter_id}} := start_id, {{exit_id}} := end_id) |> 
+    select(-c(destination_start, source_start, range_length, destination_end, source_end, start_id, in_range, end_id))
+  
+}
+
+```
+
+### Part 1
+
+```{r}
+
+part1 <- seeds |> 
+  mapping(enter_id = "seeds", exit_id = "soil", seed_to_soil) |> 
+  mapping(enter_id = "soil", exit_id = "fertilizer", soil_to_fertilizer) |> 
+  mapping(enter_id = "fertilizer", exit_id = "water", fertilizer_to_water) |> 
+  mapping(enter_id = "water", exit_id = "light", water_to_light) |> 
+  mapping(enter_id = "light", exit_id = "temperature", light_to_temp) |> 
+  mapping(enter_id = "temperature", exit_id = "humidity", temp_to_humidity) |> 
+  mapping(enter_id = "humidity", exit_id = "location", humidity_to_loc)
+
+part1 |> pull(location) |> min()
+
+#218513636
+
+```
+
+### Part 2
+
+```{r}
+
+seed_range <- seeds |> 
+  mutate(odd = ifelse(row_number() %% 2, "start", "range")) |> 
+  mutate(row_num = row_number(), .by = odd) |> 
+  pivot_wider(names_from = odd, values_from = seeds) |> 
+  select(-row_num) |> 
+  mutate(end = start + range - 1)
+
+seed_start <- seed_range |> pull(start)
+seed_end <- seed_range |> pull(end)
+
+```
+
+```{r}
+tictoc::tic()
+library(doFuture)
+plan(cluster, workers = 10)
+
+all_seeds <- foreach(i = 1:length(seed_start)) %dofuture% {
+  
+  seed_group <- seed_start[i]:seed_end[i]
+  seed_group
+
+}
+
+locations_list <- list()
+
+options(future.globals.maxSize = 1000000000)
+
+for (i in 1:10) {
+  
+  print(i)
+  
+  seed_group <- all_seeds[[i]]
+  
+  locations <- foreach(i = seq(1, length(seed_group), 1000000) , .combine = "min") %dofuture% {
+    
+    if (i + 1000000 > length(seed_group)) {
+      j <- length(seed_group)
+    } else {
+      j <- i + 1000000
+    }
+    
+    seed_f <- seed_group[i:j]
+    seed_f <- tibble(seeds = seed_f)
+    
+    min_location <- seed_f |> 
+      mapping(enter_id = "seeds", exit_id = "soil", seed_to_soil) |> 
+      mapping(enter_id = "soil", exit_id = "fertilizer", soil_to_fertilizer) |> 
+      mapping(enter_id = "fertilizer", exit_id = "water", fertilizer_to_water) |> 
+      mapping(enter_id = "water", exit_id = "light", water_to_light) |> 
+      mapping(enter_id = "light", exit_id = "temperature", light_to_temp) |> 
+      mapping(enter_id = "temperature", exit_id = "humidity", temp_to_humidity) |> 
+      mapping(enter_id = "humidity", exit_id = "location", humidity_to_loc) |> 
+      pull(location) |> 
+      min()
+    
+    min_location
+  
+  }
+  
+  print(locations)
+  
+  locations_list[i] <- locations
+  
+}
+
+locations_list |> unlist() |> min()
+tictoc::toc()
+
+```

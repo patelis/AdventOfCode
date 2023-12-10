@@ -1,0 +1,41 @@
+---
+title: "Day4"
+author: "Konstantinos Patelis"
+format: html
+---
+
+# Day 4: Camp Cleanup
+
+Solution to https://adventofcode.com/2022/day/4
+
+```{r}
+
+library(tidyverse)
+path <- "2022/data/data_day4.txt"
+data <- read_csv(path, col_names = c("elf_1", "elf_2")) %>% 
+  separate(col = elf_1, into = c("start_1", "end_1")) %>% 
+  separate(col = elf_2, into = c("start_2", "end_2")) %>% 
+  mutate(across(everything(), as.numeric))
+
+```
+
+## Part1
+
+```{r}
+
+data %>% 
+  filter(((start_2 >= start_1 & start_2 <= end_1) & (end_2 >= start_1 & end_2 <= end_1)) | ((start_1 >= start_2 & start_1 <= end_2) & (end_1 >= start_2 & end_1 <= end_2))) %>% 
+  count()
+
+```
+
+## Part2
+
+```{r}
+
+data %>% 
+  filter(((start_2 >= start_1 & start_2 <= end_1) | (end_2 >= start_1 & end_2 <= end_1)) | ((start_1 >= start_2 & start_1 <= end_2) | (end_1 >= start_2 & end_1 <= end_2))) %>% 
+  count()
+
+```
+

@@ -1,0 +1,98 @@
+---
+title: "Day1"
+author: "Konstantinos Patelis"
+format: html
+editor: visual
+---
+
+## Day 1
+
+### Data
+
+```{r}
+data <- readLines(here::here("2023", "data", "day1_data.txt"), warn = FALSE)
+```
+
+### Part 1
+
+```{r}
+
+part1 <- gsub("[A-Za-z]", "", data) |> sapply(\(x) paste0(substr(x, 1, 1), substr(x, nchar(x), nchar(x)))) |> as.numeric() |> sum()
+
+part1
+# 54338
+
+```
+
+### Part 2 - Incorrect
+
+I interpreted the instructions as picking up the first number in a mixed string, eg in eightwo, I would pick up 8 but not 2 because it did not constitute a full string after replacing eight with 8 (8wo).
+
+```{r}
+
+replace_in_order <- function(string) {
+
+  num_chars <- c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+  
+  for (i in 1:10) {
+    
+    first_char <- sapply(num_chars, \(x) if (regexpr(x, string) == -1) {NA} else regexpr(x, string))
+  
+    if (any(!is.na(first_char))) {
+    
+      string <- gsub(names(which.min(first_char)), match(names(which.min(first_char)), num_chars), string)
+    
+    } else {
+    
+      return(string)
+    
+    }
+    
+  }
+    
+}
+
+part2 <- sapply(data, replace_in_order, USE.NAMES = FALSE) |> gsub("[A-Za-z]", "", x = _) |> sapply(\(x) paste0(substr(x, 1, 1), substr(x, nchar(x), nchar(x)))) |> as.numeric() |> sum()
+
+```
+
+### Part 2 - Correct
+
+We need to pick up the first number either numeric or described in words, same with the last.
+
+```{r}
+
+find_all_matches <- function(char, string) {
+  
+  matches <- unlist(gregexpr(char, string))
+  
+  if (-1 %in% matches) {return(NULL)}
+  
+  names(matches) <- rep(char, length(matches))
+  
+  matches
+  
+}
+
+find_numbers <- function(string) {
+  
+  num_chars <- c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+  
+  char_positions <- unlist(lapply(num_chars, \(x) find_all_matches(x, string)))
+  
+  first <- names(which.min(char_positions))
+  last <- names(which.max(char_positions))
+  
+  if (first %in% num_chars[1:9]) {first <- match(first, num_chars)}
+  if (last %in% num_chars[1:9]) {last <- match(last, num_chars)}
+  
+  paste0(first, last)
+  
+}
+
+part2 <- sapply(data, find_numbers, USE.NAMES = FALSE) |> as.numeric() |> sum()
+part2
+
+```
+
+

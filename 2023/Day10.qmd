@@ -1,0 +1,124 @@
+---
+title: "Day10"
+author: "Konstantinos Patelis"
+format: html
+---
+
+## Day 10
+
+### Data
+
+```{r}
+data <- readLines(here::here("2023", "data", "day10_data.txt"), warn = FALSE) |> 
+  strsplit("")
+
+mat <- matrix(unlist(data), byrow=TRUE, nrow=length(data) )
+```
+
+### Part 1
+
+L is a 90-degree bend connecting north and east.
+J is a 90-degree bend connecting north and west.
+7 is a 90-degree bend connecting south and west.
+F is a 90-degree bend connecting south and east.
+
+```{r}
+
+map_mat <- matrix(data = -1, nrow = 140, ncol = 140)
+
+for (i in 1:140) {
+  for (j in 1:140) {
+    
+    if (mat[i,j] == "S") {
+      # print(paste0(i, j))
+      map_mat[i, j] = 0
+      if (mat[i - 1, j] %in% c("|", "7", "F")) map_mat[i - 1, j] = 1
+      if (mat[i + 1, j] %in% c("|", "L", "J")) map_mat[i + 1, j] = 1
+      if (mat[i, j - 1] %in% c("-", "L", "F")) map_mat[i, j - 1] = 1
+      if (mat[i, j + 1] %in% c("-", "7", "J")) map_mat[i, j + 1] = 1
+    }
+  }
+}
+
+dist <- 1
+
+while (dist < 140 * 140) {
+  
+  for (i in 1:140) {
+    for (j in 1:140) {
+      
+      if ( (map_mat[i, j] == dist) & (mat[i, j] == "|") ) {
+        if ((mat[i - 1, j] %in% c("|", "7", "F")) & (map_mat[i -1, j] == -1)) map_mat[i - 1, j] = dist + 1
+        if ((mat[i + 1, j] %in% c("|", "J", "L")) & (map_mat[i + 1, j] == -1)) map_mat[i + 1, j] = dist + 1
+      }
+      
+      if ( (map_mat[i, j] == dist) & (mat[i, j] == "-") ) {
+        if ((mat[i, j - 1] %in% c("-", "L", "F")) & (map_mat[i, j - 1] == -1)) map_mat[i, j - 1] = dist + 1
+        if ((mat[i, j + 1] %in% c("-", "J", "7")) & (map_mat[i, j + 1] == -1)) map_mat[i, j + 1] = dist + 1
+      }
+
+      if ( (map_mat[i, j] == dist) & (mat[i, j] == "L") ) {
+        if ((mat[i - 1, j] %in% c("|", "7", "F")) & (map_mat[i -1, j] == -1)) map_mat[i - 1, j] = dist + 1
+        if ((mat[i, j + 1] %in% c("-", "J", "7")) & (map_mat[i, j + 1] == -1)) map_mat[i, j + 1] = dist + 1
+      }
+      
+      if ( (map_mat[i, j] == dist) & (mat[i, j] == "J") ) {
+        if ((mat[i - 1, j] %in% c("|", "7", "F")) & (map_mat[i -1, j] == -1)) map_mat[i - 1, j] = dist + 1
+        if ((mat[i, j - 1] %in% c("-", "L", "F")) & (map_mat[i, j - 1] == -1)) map_mat[i, j - 1] = dist + 1
+      }
+      
+      if ( (map_mat[i, j] == dist) & (mat[i, j] == "7") ) {
+        if ((mat[i, j - 1] %in% c("-", "L", "F")) & (map_mat[i, j - 1] == -1)) map_mat[i, j - 1] = dist + 1
+        if ((mat[i + 1, j] %in% c("|", "J", "L")) & (map_mat[i + 1, j] == -1)) map_mat[i + 1, j] = dist + 1
+      }
+      
+      if ( (map_mat[i, j] == dist) & (mat[i, j] == "F") ) {
+        if ((mat[i, j + 1] %in% c("-", "J", "7")) & (map_mat[i, j + 1] == -1)) map_mat[i, j + 1] = dist + 1
+        if ((mat[i + 1, j] %in% c("|", "J", "L")) & (map_mat[i + 1, j] == -1)) map_mat[i + 1, j] = dist + 1
+      }
+      
+    }
+  }
+  
+  if (max(map_mat) == dist) break
+  dist <- dist + 1
+  
+}
+
+dist
+# saveRDS(map_mat, "test10.RDS")
+
+```
+
+### Part 2
+
+```{r}
+map_mat <- readRDS("test10.RDS")
+
+outline <- matrix(data = 0, nrow = 140, ncol = 140)
+
+in_out <- 0
+for (i in 1:140) {
+  for (j in 1:140) {
+    if ((map_mat[i,j] > -1) & mat[i,j] %in% c("|", "7", "L", "F", "J")) in_out <- in_out + 1
+    if ((in_out %% 2 != 0) & (map_mat[i,j] == -1)) outline[i, j] = 1
+    if (map_mat[i,j] > -1) outline[i,j] = 2  
+    
+  }
+}
+
+
+```
+
+```{r}
+library(tidyverse)
+df <- data.frame(outline) |> 
+  mutate(x = row_number()) |> 
+  pivot_longer(cols = -x, names_to = "y", values_to = "value") |> 
+  mutate(y = as.numeric(str_replace_all(y, "X", "")))
+
+ggplot(df, aes(y, x, colour = factor(value))) + 
+  geom_point()
+
+```
+

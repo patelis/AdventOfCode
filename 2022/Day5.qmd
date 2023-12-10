@@ -1,0 +1,77 @@
+---
+title: "Day5"
+author: "Konstantinos Patelis"
+format: html
+---
+
+# Day 5: Supply Stacks
+
+Solution to https://adventofcode.com/2022/day/5
+
+```{r}
+
+library(tidyverse)
+
+path <- "2022/data/data_day5.txt"
+stack_size <- 8
+moves_after <- 10
+
+pattern_move <- "move {amount} from {initial} to {final}"
+
+stacks <- read_fwf(path, n_max = stack_size) %>% 
+  mutate(across(everything(), str_replace_all, "\\[|\\]", "")) %>% 
+  as.list() %>% 
+  map(rev) %>% 
+  map(na.omit)
+
+moves <- read_csv(path, col_names = "text") %>% 
+  slice(moves_after:nrow(.)) %>% 
+  unlist() %>% 
+  unglue::unglue_data(pattern_move) %>% 
+  mutate(across(everything(), as.numeric))
+
+
+
+```
+
+## Part1
+
+```{r}
+
+p1 <- stacks
+for (move in seq_along(1:nrow(moves))) {
+  
+  to <- moves[move, "final"]
+  from <- moves[move, "initial"]
+  amount <- moves[move, "amount"]
+  
+  p1[[to]] <- append(p1[[to]], rev(p1[[from]])[1:amount])
+  p1[[from]] <- p1[[from]][1:(length(p1[[from]]) - amount)]
+  
+}
+
+map_chr(map(p1, rev), `[[`, 1) %>% paste0(collapse = "")
+
+```
+
+## Part2
+
+```{r}
+
+p2 <- stacks
+for (move in seq_along(1:nrow(moves))) {
+  
+  to <- moves[move, "final"]
+  from <- moves[move, "initial"]
+  amount <- moves[move, "amount"]
+  
+  p2[[to]] <- append(p2[[to]], p2[[from]][(length(p2[[from]]) - amount + 1):(length(p2[[from]]))])
+  p2[[from]] <- p2[[from]][1:(length(p2[[from]]) - amount)]
+  
+}
+
+map_chr(map(p2, rev), `[[`, 1) %>% paste0(collapse = "")
+
+
+```
+

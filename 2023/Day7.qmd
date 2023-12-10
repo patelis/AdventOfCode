@@ -1,0 +1,91 @@
+---
+title: "Day7"
+author: "Konstantinos Patelis"
+format: html
+editor: visual
+---
+
+## Day 7
+
+Five of a kind, where all five cards have the same label: AAAAA -> Only one distinct card (1)
+Four of a kind, where four cards have the same label and one card has a different label: AA8AA -> 2 different cards and one appears four times (2)
+Full house, where three cards have the same label, and the remaining two cards share a different label: 23332 -> 2 different cards and none appears four times (3)
+Three of a kind, where three cards have the same label, and the remaining two cards are each different from any other card in the hand: TTT98 -> 3 different cards, one appears 3 times (4)
+Two pair, where two cards share one label, two other cards share a second label, and the remaining card has a third label: 23432 -> three different cards (5)
+One pair, where two cards share one label, and the other three cards have a different label from the pair and each other: A23A4 -> Four distinct cards (6)
+High card, where all cards' labels are distinct: 23456 -> Five distinct cards (7)
+
+### Part 1
+
+```{r}
+library(tidyverse)
+
+data <- readLines(here::here("2023", "data", "day7_data.txt"), warn = FALSE) |> 
+  tibble(data = _) |> 
+  separate_wider_delim(cols = "data", delim = " ", names = c("hand", "bid")) |> 
+  mutate(bid = as.numeric(bid), 
+         hand_cards = strsplit(hand, "")) |> 
+  mutate(distinct_cards = as.numeric(map(hand_cards, \(x) length(unique(unlist(x)))))) |> 
+  mutate(max_num_same = map_dbl(hand_cards, \(x) max(table(x)))) |> 
+  mutate(hand_type = case_when(
+                        distinct_cards == 1 ~ 1,
+                        distinct_cards == 4 ~ 6,
+                        distinct_cards == 5 ~ 7,
+                        distinct_cards == 2 & max_num_same == 4 ~ 2, 
+                        distinct_cards == 2 ~ 3, 
+                        distinct_cards == 3 & max_num_same == 3 ~ 4,
+                        distinct_cards == 3 ~ 5
+                        )) |>
+  hoist(hand_cards, 
+        first_card = 1L, 
+        second_card = 2L, 
+        third_card = 3L, 
+        fourth_card = 4L, 
+        fifth_card = 5L, 
+        .remove = FALSE) |> 
+  mutate(across(ends_with("_card"), \(x) as.numeric(str_replace_all(x, c("A" = "14", "K" = "13", "Q" = "12", "J" = "11", "T" = "10")))  ))
+  
+part1 <- data |> 
+  arrange(hand_type, desc(first_card), desc(second_card), desc(third_card), desc(fourth_card), desc(fifth_card)) |> 
+  mutate(rank = rank(-row_number()), 
+         win = bid * rank)
+
+part1 |> summarise(sum(win))
+
+```
+
+### Part 2
+
+```{r}
+
+part2 <- data |> 
+  mutate(across(ends_with("_card"), \(x)  ifelse(x == 11, 1, x) ), 
+         hand_cards_no_j = map(hand_cards, \(x) x[!x %in% grep("J", x, value = TRUE)]), 
+         most_common = map(hand_cards_no_j, \(x) names(which.max(table(x)))) ) |> 
+  hoist(most_common, most_common_card = 1L) |> 
+  mutate(most_common_card = ifelse(is.na(most_common_card), "J", most_common_card), 
+         hand_with_j = str_replace_all(hand, "J", most_common_card), 
+         hand_cards_with_j = strsplit(hand_with_j, ""), 
+         distinct_cards_with_j = as.numeric(map(hand_cards_with_j, \(x) length(unique(unlist(x))))), 
+         max_num_same_with_j = map_dbl(hand_cards_with_j, \(x) max(table(x)))) |> 
+  mutate(hand_type_with_j = case_when(
+                        distinct_cards_with_j == 1 ~ 1,
+                        distinct_cards_with_j == 4 ~ 6,
+                        distinct_cards_with_j == 5 ~ 7,
+                        distinct_cards_with_j == 2 & max_num_same_with_j == 4 ~ 2, 
+                        distinct_cards_with_j == 2 ~ 3, 
+                        distinct_cards_with_j == 3 & max_num_same_with_j == 3 ~ 4,
+                        distinct_cards_with_j == 3 ~ 5
+                        )) |> 
+  arrange(hand_type_with_j, desc(first_card), desc(second_card), desc(third_card), desc(fourth_card), desc(fifth_card)) |> 
+  mutate(rank = rank(-row_number()), 
+         win = bid * rank)
+  
+part2 |> summarise(sum(win))
+
+```
+
+
+
+
+

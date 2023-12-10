@@ -1,0 +1,141 @@
+---
+title: "Day11"
+author: "Konstantinos Patelis"
+date: "11/12/2021"
+output: html_document
+---
+
+# Day 11: Dumbo Octopus
+
+Solution to https://adventofcode.com/2021/day/11
+
+```{r}
+
+library(tidyverse)
+
+```
+
+
+```{r data}
+
+# tictoc::tic()
+
+path <- "2021/data/data_day11.txt"
+
+data <- readLines(path) |> strsplit(split = NULL) |> unlist() |> as.numeric()
+
+mat <- matrix(data, nrow = 10, ncol = 10, byrow = TRUE)
+colnames(mat) <- paste0("x", 1:ncol(mat))
+
+# tictoc::toc()
+# 0.11 sec elapsed
+
+```
+
+## Part 1
+
+```{r part1}
+
+# tictoc::tic()
+
+rows <- nrow(mat)
+columns <- ncol(mat)
+
+bigger_mat <- matrix(NA, nrow = rows + 2, ncol = columns + 2)
+
+bigger_mat[2:(rows + 1), 2:(columns + 1)] = mat
+counter <- 0
+
+for (k in 1:100) {
+
+  bigger_mat = bigger_mat + 1
+  
+  while(sum(bigger_mat > 9, na.rm = TRUE) > 0) {
+    
+    flashed <- data.frame(which(bigger_mat > 9 & !bool_mat, arr.ind = TRUE))
+    
+    if (nrow(flashed) > 0) {
+      
+      for (i in 1:nrow(flashed)) {
+      
+        x_f <- flashed$row[[i]]
+        y_f <- flashed$col[[i]]
+        bigger_mat[(x_f - 1):(x_f + 1), (y_f - 1):(y_f + 1)] = bigger_mat[(x_f - 1):(x_f + 1), (y_f -               1):(y_f + 1)] + 1
+        bigger_mat[x_f, y_f] = -Inf
+      
+        counter <- counter + 1
+      
+      }
+    
+    }
+    
+  }
+  
+  bigger_mat[bigger_mat == -Inf] = 0
+ 
+}
+
+counter
+# 1620
+
+# tictoc::toc()
+# 0.6 sec elapsed
+
+```
+
+
+## Part 2
+
+```{r part2}
+
+# Part 2
+
+# tictoc::tic()
+
+rows <- nrow(mat)
+columns <- ncol(mat)
+
+bigger_mat <- matrix(NA, nrow = rows + 2, ncol = columns + 2)
+
+bigger_mat[2:(rows + 1), 2:(columns + 1)] = mat
+counter <- 0
+
+repeat {
+
+  if(all(bigger_mat[2:(rows + 1), 2:(columns + 1)] == 0)) break
+  
+  counter <- counter + 1
+  
+  bigger_mat = bigger_mat + 1
+  
+  while(sum(bigger_mat > 9, na.rm = TRUE) > 0) {
+    
+    flashed <- data.frame(which(bigger_mat > 9 & !bool_mat, arr.ind = TRUE))
+    
+    if (nrow(flashed) > 0) {
+      
+      for (i in 1:nrow(flashed)) {
+      
+        x_f <- flashed$row[[i]]
+        y_f <- flashed$col[[i]]
+        bigger_mat[(x_f - 1):(x_f + 1), (y_f - 1):(y_f + 1)] = bigger_mat[(x_f - 1):(x_f + 1), (y_f -               1):(y_f + 1)] + 1
+        bigger_mat[x_f, y_f] = -Inf
+      
+      }
+    
+    }
+    
+  }
+  
+  bigger_mat[bigger_mat == -Inf] = 0
+ 
+}
+
+counter
+# 371
+
+# tictoc::toc()
+# 0.8 sec elapsed
+
+```
+

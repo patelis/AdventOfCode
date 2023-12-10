@@ -1,0 +1,198 @@
+---
+title: "Day16"
+author: "Konstantinos Patelis"
+date: "16/12/2021"
+output: html_document
+---
+
+# Day 16: Packet Decoder
+
+Solution to https://adventofcode.com/2021/day/16
+
+```{r data}
+
+library(tidyverse)
+library(binaryLogic)
+
+path <- "2021/data/data_day16.txt"
+
+hex <- readLines(path) |> 
+  strsplit(split = NULL) |> 
+  unlist()
+
+dec <- hex |>
+  sapply(FUN = (\(x) strtoi(x, base = 16L)))
+
+bin <- dec |>
+  lapply(FUN = (\(x) as.character(as.binary(x, n = 4)))) |>
+  unlist() |> 
+  paste0(collapse = "")
+
+
+# 620080001611562C8802118E34
+# C0015000016115A2E0802F182340
+# 8A004A801A8002F478
+
+example <- "8A004A801A8002F478" |>
+  strsplit(split = NULL) |> 
+  unlist() |>
+  sapply(FUN = (\(x) strtoi(x, base = 16L))) |>
+  lapply(FUN = (\(x) as.character(as.binary(x, n = 4)))) |>
+  unlist() |> 
+  paste0(collapse = "")
+
+```
+
+## Part 1
+
+```{r part1}
+
+# Part 1
+
+calculate_packet <- function(type_id, literals) {
+  switch(
+    type_id + 1,
+    sum(literals),
+    prod(literals),
+    min(literals),
+    max(literals),
+    NA, # packet_type = 4
+    ifelse(literals[1] >  literals[2], 1, 0),
+    ifelse(literals[1] <  literals[2], 1, 0),
+    ifelse(literals[1] == literals[2], 1, 0),
+  )
+}
+
+decode_literal <- function(vec, i) {
+  
+  leading_one <- TRUE
+  literal <- NULL
+  
+  while(leading_one) {
+    
+    lit_sub <- str_sub(vec, i, i + 4)
+    
+    leading_one <- as.logical(as.numeric(str_sub(lit_sub, 1, 1)))
+    
+    literal <- paste0(literal, str_sub(lit_sub, 2, 5))
+    
+    i <- i + 5
+    
+  }
+  
+  list(i, literal)
+  
+}
+
+decode_transmission <- function(vec, i = 1, part = 1) {
+
+version <- vec %>% 
+  str_sub(start = i, end = i + 2) %>% 
+  strtoi(base = 2L)
+
+type_id <- vec %>% 
+  str_sub(start = i + 3, end = i + 5) %>% 
+  strtoi(base = 2L)
+
+i <- i + 6
+
+# Literal
+
+if (type_id == 4) { # Literal value
+  
+  literal_val <- decode_literal(vec, i)
+  
+  i <- literal_val[[1]]
+  literal <- literal_val[[2]] %>% 
+    strtoi_custom()
+  
+  return(list(value = literal, ind = i, version = version))
+  
+}
+
+# Operator
+
+values <- NULL
+
+length_type_id <- str_sub(vec, i, i)
+
+i <- i + 1
+
+if (length_type_id == 0) {
+ 
+  bit_length <- str_sub(vec, i, i + 14) %>% 
+    strtoi(base = 2L)
+  
+  i <- i + 15
+     
+  end <- i + bit_length
+  
+  while (i < end) {
+    
+    subpacket <- decode_transmission(vec, i)
+    
+    version <- c(version, subpacket$version)
+    values <- c(values, subpacket$value)
+    
+    i <- subpacket$ind
+    
+    }
+
+  } else if (length_type_id == 1) {
+    
+    num_packets <- vec %>% 
+      str_sub(start = i, end = i + 10) %>% 
+      strtoi(base = 2L)
+      
+    i <- i + 11 
+    
+    for (k in 1:num_packets) {
+      
+      subpacket <- decode_transmission(vec, i)
+      
+      version <- c(version, subpacket$version)
+      values <- c(values, subpacket$value)
+      i <- subpacket$ind
+    
+    }
+    
+  }
+   
+  if (part == 1) {
+    
+    return(list(value = values, ind = i, version = version))
+    
+  } else if (part == 2) {
+    
+    value <- calculate_packet(type_id, values)
+  
+    return(list(value = value, ind = i, version = version))
+    
+  }
+ 
+}
+
+part1 <- decode_transmission(bin)
+sum(part1$version)
+  
+```
+
+
+## Part 2
+
+```{r part2}
+
+# Part 2
+
+strtoi_custom <- function(x) {
+  y <- as.numeric(strsplit(x, "")[[1]])
+  sum(y * 2^rev((seq_along(y) - 1)))
+}
+
+part2 <- decode_transmission(bin, part = 2)
+
+options(scipen = 999)
+
+part2$value
+
+```

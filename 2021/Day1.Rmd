@@ -1,0 +1,71 @@
+---
+title: "Day1"
+author: "Konstantinos Patelis"
+date: "01/12/2021"
+output: html_document
+---
+
+# Day 1: Sonar Sweep
+
+Solution to https://adventofcode.com/2021/day/1
+
+```{r libraries}
+
+library(tidyverse)
+library(slider)
+
+```
+
+```{r data}
+
+data <- read_csv("2021/data/data_day1.txt", col_names = "depth")
+
+```
+
+## Part 1
+
+```{r}
+
+# Single Measurement
+
+data %>%
+  mutate(lag = lag(depth),
+         delta = depth - lag,
+         change = case_when(
+           delta > 0 ~ "increase",
+           delta < 0 ~ "decrease",
+           delta == 0 ~ "same",
+           is.na(delta) ~ NA_character_
+         )) %>%
+  group_by(change) %>%
+  summarise(count = n())
+
+# sum(diff(data$depth))
+
+```
+
+## Part 2
+
+```{r}
+
+# Three measurement sliding window
+
+data %>% 
+  mutate(window = slide_dbl(depth, ~sum(.x), .before = 1, .after = 1, .complete = TRUE), 
+         lag = lag(window), 
+         delta = window - lag, 
+         change = case_when(
+           delta > 0 ~ "increase", 
+           delta < 0 ~ "decrease",
+           delta == 0 ~ "same", 
+           is.na(delta) ~ NA_character_
+         )) %>%
+  group_by(change) %>% 
+  summarise(count = n())
+
+# sum3 <- slide_dbl(data$depth, sum, .before = 1, .after = 1, .complete = TRUE)
+# sum(diff(sum3) > 0, na.rm = TRUE)
+
+```
+
+
