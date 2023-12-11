@@ -81,15 +81,11 @@ while (dist < 140 * 140) {
 }
 
 dist
-# saveRDS(map_mat, "test10.RDS")
-
 ```
 
 ### Part 2
 
 ```{r}
-map_mat <- readRDS("test10.RDS")
-
 outline <- matrix(data = 0, nrow = 140, ncol = 140)
 
 
