@@ -17,11 +17,6 @@ mat <- matrix(unlist(data), byrow=TRUE, nrow=length(data) )
 
 ### Part 1
 
-L is a 90-degree bend connecting north and east.
-J is a 90-degree bend connecting north and west.
-7 is a 90-degree bend connecting south and west.
-F is a 90-degree bend connecting south and east.
-
 ```{r}
 
 map_mat <- matrix(data = -1, nrow = 140, ncol = 140)
@@ -97,20 +92,18 @@ map_mat <- readRDS("test10.RDS")
 
 outline <- matrix(data = 0, nrow = 140, ncol = 140)
 
-in_out <- 0
+
 for (i in 1:140) {
+  in_out <- 0
   for (j in 1:140) {
-    if ((map_mat[i,j] > -1) & mat[i,j] %in% c("|", "7", "L", "F", "J")) in_out <- in_out + 1
+    if ((map_mat[i,j] > -1) & mat[i,j] %in% c("|", "L", "J", "S")) in_out <- in_out + 1
+    #if ((map_mat[i,j] > -1) & mat[i,j] %in% c("|", "7", "F", "S")) in_out <- in_out + 1
     if ((in_out %% 2 != 0) & (map_mat[i,j] == -1)) outline[i, j] = 1
     if (map_mat[i,j] > -1) outline[i,j] = 2  
     
   }
 }
 
-
-```
-
-```{r}
 library(tidyverse)
 df <- data.frame(outline) |> 
   mutate(x = row_number()) |> 
@@ -120,5 +113,6 @@ df <- data.frame(outline) |>
 ggplot(df, aes(y, x, colour = factor(value))) + 
   geom_point()
 
-```
+sum(outline == 1)
 
+```
