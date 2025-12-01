@@ -1,5 +1,14 @@
+.venv/
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
-*/data/*
+.env
+.python-version
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.vscode/
+.DS_Store
+pyproject.toml
+uv.lock
